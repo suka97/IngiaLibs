@@ -1,0 +1,12 @@
+# ignore all . files but include Ingia folders and gitignore and readme
+*
+!.gitignore
+!README.md
+!Ingia*/
+!Ingia*/*
+!Ingia*/*/*
+!Ingia*/*/*/*
+!Ingia*/*/*/*/*
+
+# and also ignore vscode
+*/.*
