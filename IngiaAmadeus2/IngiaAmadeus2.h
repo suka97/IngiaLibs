@@ -9,6 +9,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <AccelStepper.h>
+#include <IngiaStepper.h>
 // DISPLAY
 #include "splash_INGIA.h"
 #include "AmadeusLCD.h"
