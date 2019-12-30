@@ -50,8 +50,8 @@ void configuracionAvanzada() {
   // si se quiere un menu de login
   if ( amadeus.login("111" /*contraseña numerica*/) ) {
     // muestro un mensaje que diga que logro entrar al "menu de parametros"
-    amadeus.print("Menu", 0, IngiaAmadeus2::LCD_CENTER, true);
-    amadeus.print("Parametros", 1, IngiaAmadeus2::LCD_CENTER, false);
+    amadeus.print("Menu", 0, LCD_CENTER, true);
+    amadeus.print("Parametros", 1, LCD_CENTER, false);
     delay(1500);
     
     configuracionAvanzada_SinLogin();
@@ -63,6 +63,6 @@ void configuracionAvanzada_SinLogin(){
   while( amadeus.menuParametros() ); 
 
   // muestro un mensaje que diga que salio del menu
-  amadeus.print("Saliendo", 1, IngiaAmadeus2::LCD_CENTER, true);
+  amadeus.print("Saliendo", 1, LCD_CENTER, true);
   delay(1500);
 }
