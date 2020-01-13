@@ -18,7 +18,8 @@ class AmadeusLCD
 // -------------------------------------------- Public Members -------------------------------------------------
 public:
     // Constructor, Deconstructor and Initialization
-    AmadeusLCD(const u8g2_cb_t* r, int cs, int dc, int res) : _u8g2(r, cs, dc, res) { }
+    AmadeusLCD(U8G2 *u8g2) { _u8g2 = u8g2; }
+    AmadeusLCD() { }
     ~AmadeusLCD() { _freeBuffer(); };
     void init(const uint8_t *font, uint8_t charsExtra = 0, uint8_t rowsExtra = 0, int espacioTop = -1);
     
@@ -42,12 +43,12 @@ public:
 
 
     // Getters
-    uint16_t getEspacioLetter() { return (_u8g2.getDisplayWidth() / _bufSize_X); };
+    uint16_t getEspacioLetter() { return (_u8g2->getDisplayWidth() / _bufSize_X); };
     uint8_t getMaxLetters() { return (_bufSize_X); }
     uint8_t getMaxRows() { return _bufSize_Y; }
     void setRain(boolean r, uint8_t numRains = 10);
     uint16_t getAlturaRenglon(uint8_t renglon) {
-        return ( renglon * (_u8g2.getMaxCharHeight() +  ESPACIO_EXTRA_RENGLON) + _espacioTop );
+        return ( renglon * (_u8g2->getMaxCharHeight() +  ESPACIO_EXTRA_RENGLON) + _espacioTop );
     }
     
 
@@ -91,7 +92,7 @@ protected:
 
 
     // Internal Pointers and Variables
-    U8G2_SSD1306_128X64_NONAME_1_4W_HW_SPI _u8g2;
+    U8G2 * _u8g2;
     uint8_t **_log_buffer;
     uint8_t _bufSize_X, _bufSize_Y;
     uint8_t _index_X=0, _index_Y=0;
@@ -104,6 +105,7 @@ protected:
 
 
     // Protected Methods
+    void _setU8G2(U8G2 *u8g2) { _u8g2 = u8g2; }
     void _clearBuffer();
     void _sendBuffer();
     void _bufferRenglonVacio(uint8_t row);

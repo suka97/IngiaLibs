@@ -13,10 +13,14 @@ boolean IngiaAmadeus2::begin(uint8_t pinModeA, uint8_t pinModeB, uint8_t pinMode
     pinMode(PIN_IO_F, pinModeF);
     pinMode(PIN_STEPPER_ENABLE, OUTPUT);
     
-    stepper1.setMaxSpeed(2000);      // default initial max speed
-    stepper2.setMaxSpeed(2000);      // default initial max speed
-    stepper1.setAcceleration(1000);  // default initial acceleration
-    stepper2.setAcceleration(1000);  // default initial acceleration
+    return begin_CustomHardWare();
+}
+
+boolean IngiaAmadeus2::begin_CustomHardWare() {
+    for ( int i=0 ; i<_cantMotores ; i++ ) {
+        stepper[i]->setMaxSpeed(2000);      // default initial max speed
+        stepper[i]->setAcceleration(1000);  // default initial acceleration
+    }
 
     #ifdef __AVR__
         Timer1.initialize(1000);
@@ -24,7 +28,7 @@ boolean IngiaAmadeus2::begin(uint8_t pinModeA, uint8_t pinModeB, uint8_t pinMode
     #else
         toggleTimer();
     #endif
-    encoder.setAccelerationEnabled(true);
+    encoder->setAccelerationEnabled(true);
 
     init(MI_FUENTE, 5, 0, 0);      // inicializo lo de AmadeusLCD
     //drawBitmap_Curtain(logo_INGIA, LOGO_INGIA_WIDTH, LOGO_INGIA_HEIGHT, 12, 6);
@@ -46,11 +50,11 @@ boolean IngiaAmadeus2::begin(uint8_t pinModeA, uint8_t pinModeB, uint8_t pinMode
     }
 
     // para que suelte el boton si lo tiene presionado
-    boolean mantuvoPresonado = encoder.isPressed();
+    boolean mantuvoPresonado = encoder->isPressed();
     if ( mantuvoPresonado ) {
         print(F("Configuracion"), 1, LCD_CENTER, true);
         delay(1500);
-        while(encoder.isPressed());
+        while(encoder->isPressed());
     }
 
     return mantuvoPresonado;
@@ -59,7 +63,7 @@ boolean IngiaAmadeus2::begin(uint8_t pinModeA, uint8_t pinModeB, uint8_t pinMode
 boolean IngiaAmadeus2::cambiarVar(long *var, long valmin, long valmax, int *flagMaxMin) {
     boolean changeFlag = false;   
 
-    long delta = encoder.getValue();
+    long delta = encoder->getValue();
     if ( delta != 0 ) {
         if ( (delta>0) && ((*var)<valmax) ) {
             (*var) += delta;
@@ -146,7 +150,7 @@ boolean IngiaAmadeus2::menuParametros() {
             printMenuFlag = false;  
             print(">", (indexMenu - topIndex), LCD_LEFT, false, 0);
 
-            encoder.setAccelerationEnabled(false);
+            encoder->setAccelerationEnabled(false);
         }
 
         if ( cambiarVar(&indexMenu, 0, (_cantMenus-1)) ) {
@@ -166,15 +170,15 @@ boolean IngiaAmadeus2::menuParametros() {
             lastRowIndex = indexMenu;
         }
         
-        switch( encoder.getButton() ) {
-            case encoder.DoubleClicked:
+        switch( encoder->getButton() ) {
+            case encoder->DoubleClicked:
                 printMenuFlag = true;
                 lcdClear();
                 return false;
-            case encoder.Clicked:
+            case encoder->Clicked:
                 bufferValor = getVal(indexMenu);
                 currentlyChanging = true;
-                encoder.setAccelerationEnabled(true);
+                encoder->setAccelerationEnabled(true);
 
                 strcpy_P(bufferMenu, (char*)pgm_read_word(&(_menus[indexMenu]))); // no tocar renglon ;)
                 strcpy_P(bufferUnid, (char*)pgm_read_word(&(_unids[indexMenu]))); // no tocar renglon ;)
@@ -194,8 +198,8 @@ boolean IngiaAmadeus2::menuParametros() {
                 pgm_read_dword(&_valmax[indexMenu]), bufferUnid, true );
         }
 
-        AmadeusEncoder::ButtonStatus_t boton = encoder.getButton();
-        if ( (boton == encoder.DoubleClicked) || (boton == encoder.Clicked) ) {
+        AmadeusEncoder::ButtonStatus_t boton = encoder->getButton();
+        if ( (boton == encoder->DoubleClicked) || (boton == encoder->Clicked) ) {
             currentlyChanging = false;
             EEPROM_WriteValue(bufferValor, indexMenu);
         }
@@ -250,7 +254,7 @@ boolean IngiaAmadeus2::login(char const *password) {
             print(passArray[digitoSeleccionado], 1, LCD_LEFT, false, posDigito[digitoSeleccionado]);
         }
 
-        switch( encoder.getButton() ) {
+        switch( encoder->getButton() ) {
             case AmadeusEncoder::Held: 
             // checkeo el pass
                 correctPass = true;
@@ -296,8 +300,8 @@ void IngiaAmadeus2::jogEncoder(uint8_t motorNumber, float defaultSpeed) {
     float dir = 1;
     stepper[motorNumber-1]->setSpeed((float)speed);
     boolean running = false;
-    encoder.setHoldTime(250);
-    encoder.setAccelerationEnabled(true);
+    encoder->setHoldTime(250);
+    encoder->setAccelerationEnabled(true);
 
     lcdClear();
     print("JOG", 0, LCD_CENTER, false, -1, false);
@@ -312,7 +316,7 @@ void IngiaAmadeus2::jogEncoder(uint8_t motorNumber, float defaultSpeed) {
             print(" "+String(speed), 1, LCD_RIGHT, false, -1, true);
         }
 
-        switch ( encoder.getButton() ) {
+        switch ( encoder->getButton() ) {
             case AmadeusEncoder::Held:
                 if( !running ) {
                     stepper[motorNumber-1]->setSpeed((float)speed * dir);
@@ -335,7 +339,7 @@ void IngiaAmadeus2::jogEncoder(uint8_t motorNumber, float defaultSpeed) {
         }
     }
 
-    encoder.setHoldTime(2000);  // back to default
+    encoder->setHoldTime(2000);  // back to default
 }
 
 uint8_t IngiaAmadeus2::_getOpcionesSize(char const *str, char index) {
@@ -380,12 +384,12 @@ int IngiaAmadeus2::menu(const char* opciones) {
     char items[cantItems][wordSize];
     _splitOpciones(opciones, (char**)items, wordSize, ',');
 
-    encoder.setAccelerationEnabled(false);
+    encoder->setAccelerationEnabled(false);
 
     uint8_t topIndex = 0, lastRowIndex = 0;
     long indexMenu = 0;
     boolean printMenuFlag = true;
-    AmadeusEncoder::ButtonStatus_t button = encoder.getButton();
+    AmadeusEncoder::ButtonStatus_t button = encoder->getButton();
     while ( button == AmadeusEncoder::Open ) 
     {
         if (printMenuFlag) { 
@@ -416,7 +420,7 @@ int IngiaAmadeus2::menu(const char* opciones) {
             lastRowIndex = indexMenu;
         }
         
-        button = encoder.getButton();
+        button = encoder->getButton();
     }
 
     // devuelvo -1 si mantuvo apretado (osea cancelo)

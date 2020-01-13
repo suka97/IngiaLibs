@@ -37,6 +37,13 @@ typedef enum {
   ACTION_COPY  = ((uint8_t)0x08)
 } motorAction_t;
 
+typedef enum {
+  STOPPED         = ((uint8_t)0x0),
+  ACCELERATING    = ((uint8_t)0x1), 
+  DECELERATING    = ((uint8_t)0x2), 
+  CONSTANT_SPEED  = ((uint8_t)0x3)
+} motorStatus_t;
+
 
 typedef enum {
   STEP_MODE_FULL   = ((uint8_t)0x00), 
@@ -51,6 +58,20 @@ typedef enum {
   STEP_MODE_UNKNOW = ((uint8_t)0xFE),
   STEP_MODE_WAVE   = ((uint8_t)0xFF)  
 } step_mode_t;
+
+
+typedef enum {
+  SW_OPENED = 0,
+  SW_CLOSED = 1
+} sw_Status_t;
+
+
+typedef enum {
+  TH_NORMAL       = ((uint8_t)0x0),
+  TH_WARNING      = ((uint8_t)0x1), 
+  TH_BRIDGE_SD    = ((uint8_t)0x2), 
+  TH_DEVICE_SD    = ((uint8_t)0x3)
+} th_Status_t;
 
 
 /// masks for ABS_POS register of ST_DRIVER

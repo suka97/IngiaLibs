@@ -32,7 +32,7 @@ private:
         instance->onInterrupt();
     };
     void onInterrupt() {
-        encoder.service();
+        encoder->service();
         if( _customInterrupt_Pointer != NULL )
             _customInterrupt_Pointer();
     };
@@ -60,7 +60,7 @@ private:
     const char * const *_unids;
     const long *_valmin;
     const long *_valmax;
-    int _cantMenus = 0;
+    int _cantMenus = 0, _cantMotores;
     uint16_t _xPrintIndex = 0, _yPrintIndex = 0;
 
 
@@ -75,17 +75,35 @@ private:
 public:
     // Constructor and Initialization
     IngiaAmadeus2( const char * const *menus, const long *valoresDefault, const char * const *unids, const long *valmin, const long *valmax, const int cantMenus, 
-        uint8_t pinEnc_A = PIN_ENCODER_A, uint8_t pinEnc_B = PIN_ENCODER_B ):   // por si hay que invertir el encoder...
-        AmadeusLCD(U8G2_R0, PIN_LCD_CS, PIN_LCD_DC, PIN_LCD_RES),
-        stepper1(AccelStepper::DRIVER, PIN_STEPPER1_PULSO, PIN_STEPPER1_DIRECCION),
-        stepper2(AccelStepper::DRIVER, PIN_STEPPER2_PULSO, PIN_STEPPER2_DIRECCION),
-        encoder(pinEnc_A, pinEnc_B, PIN_ENCODER_BUTTON, ENCODER_STEPS_PER_NOTCH, LOW) 
+        AmadeusEncoder *rotaryEncoder = NULL,     // por si hay que invertir el encoder ...
+        U8G2 *u8g2 = NULL, AccelStepper **stepperArray = NULL, int cantMotores = 1 ):        // por si no lo uso fuera del hardware Amadeus
+            AmadeusLCD() 
         {
+            if ( u8g2 == NULL )
+                _setU8G2( new U8G2_SSD1306_128X64_NONAME_1_4W_HW_SPI(U8G2_R0, PIN_LCD_CS, PIN_LCD_DC, PIN_LCD_RES) );
+            else 
+                _setU8G2( u8g2 );
+            if ( stepperArray == NULL ) {
+                stepper = new AccelStepper *[2];
+                stepper[0] = new AccelStepper(AccelStepper::DRIVER, PIN_STEPPER1_PULSO, PIN_STEPPER1_DIRECCION);
+                stepper[1] = new AccelStepper(AccelStepper::DRIVER, PIN_STEPPER2_PULSO, PIN_STEPPER2_DIRECCION);
+                _cantMotores = 2;
+            }
+            else {
+                _cantMotores = cantMotores;
+                stepper = stepperArray;
+            }
+
+            if ( rotaryEncoder == NULL )
+                encoder = new AmadeusEncoder(PIN_ENCODER_A, PIN_ENCODER_B, PIN_ENCODER_BUTTON, ENCODER_STEPS_PER_NOTCH, LOW);
+            else
+                encoder = rotaryEncoder;
+
             _menus = menus; _valores = valoresDefault; _unids = unids; _valmin = valmin; 
             _valmax = valmax; _cantMenus = cantMenus;
             instance = this;
-            stepper[0] = &stepper1; stepper[1] = &stepper2;   // stepper array initialization
         }
+    boolean begin_CustomHardWare();
     boolean begin( uint8_t pinModeA = OUTPUT, uint8_t pinModeB = OUTPUT, uint8_t pinModeC = OUTPUT, 
         uint8_t pinModeD = OUTPUT, uint8_t pinModeE = OUTPUT, uint8_t pinModeF = OUTPUT);
 
@@ -142,10 +160,8 @@ public:
 
 
     // Public Variables and Classes
-    AccelStepper stepper1;
-    AccelStepper stepper2;
-    AccelStepper *stepper[2];
-    AmadeusEncoder encoder;
+    AccelStepper **stepper;
+    AmadeusEncoder *encoder;
 };
 
 #endif

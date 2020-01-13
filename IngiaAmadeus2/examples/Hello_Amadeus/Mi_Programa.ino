@@ -24,10 +24,10 @@ void MiPrograma() {
 
 void loopMov() {
     // seteo las velocidades y aceleraciones con los valores guardados
-    amadeus.stepper1.setAcceleration( amadeus.getVal(ACELERACION) );
-    amadeus.stepper2.setAcceleration( amadeus.getVal(ACELERACION) );
-    amadeus.stepper1.setMaxSpeed( amadeus.getVal(VEL_AUTO_1) );
-    amadeus.stepper2.setMaxSpeed( amadeus.getVal(VEL_AUTO_2) );
+    amadeus.stepper[0]->setAcceleration( amadeus.getVal(ACELERACION) );
+    amadeus.stepper[1]->setAcceleration( amadeus.getVal(ACELERACION) );
+    amadeus.stepper[0]->setMaxSpeed( amadeus.getVal(VEL_AUTO_1) );
+    amadeus.stepper[1]->setMaxSpeed( amadeus.getVal(VEL_AUTO_2) );
 
     while(1) 
     {
@@ -43,12 +43,12 @@ void loopMov() {
         amadeus.print("Moviendo", 0, LCD_CENTER, true);
         amadeus.print("para un", 1, LCD_CENTER, false);
         amadeus.print("lado", 2, LCD_CENTER, false);
-        amadeus.stepper1.move( amadeus.getVal(LARGO_TOTAL) );
+        amadeus.stepper[0]->move( amadeus.getVal(LARGO_TOTAL) );
 
         // hago el movimiento
-        while( amadeus.stepper1.run() ) {
+        while( amadeus.stepper[0]->run() ) {
             // si aprieto el encoder salgo del loop
-            if ( amadeus.encoder.isDoubleClicked() ) {
+            if ( amadeus.encoder->isDoubleClicked() ) {
                 amadeus.print("Cancelado", 1, LCD_CENTER, true);
                 delay(1500);
                 return;
@@ -65,10 +65,10 @@ void loopMov() {
         amadeus.print("otro", 2, LCD_CENTER, false);
         
         // hago el movimiento
-        amadeus.stepper1.move( -amadeus.getVal(LARGO_TOTAL) );
-        while( amadeus.stepper1.run() ) {
+        amadeus.stepper[0]->move( -amadeus.getVal(LARGO_TOTAL) );
+        while( amadeus.stepper[0]->run() ) {
             // si aprieto el encoder salgo del loop
-            if ( amadeus.encoder.isDoubleClicked() ) {
+            if ( amadeus.encoder->isDoubleClicked() ) {
                 amadeus.print("Cancelado", 1, LCD_CENTER, true);
                 delay(1500);
                 return;

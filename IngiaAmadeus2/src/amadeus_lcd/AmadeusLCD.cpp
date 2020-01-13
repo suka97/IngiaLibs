@@ -10,8 +10,8 @@ void AmadeusLCD::_freeBuffer() {
 
 void AmadeusLCD::_makeBuffer(uint8_t charsExtra, uint8_t rowsExtra) {
     // pido memoria dinamica
-    _bufSize_X = (_u8g2.getDisplayWidth() / _u8g2.getMaxCharWidth()) + charsExtra + 1;
-    _bufSize_Y = (_u8g2.getDisplayHeight() / _u8g2.getMaxCharHeight()) + rowsExtra;
+    _bufSize_X = (_u8g2->getDisplayWidth() / _u8g2->getMaxCharWidth()) + charsExtra + 1;
+    _bufSize_Y = (_u8g2->getDisplayHeight() / _u8g2->getMaxCharHeight()) + rowsExtra;
     _log_buffer = new uint8_t *[_bufSize_Y]; 
     for ( uint8_t i=0 ; i<_bufSize_Y ; i++ )
         _log_buffer[i] = new uint8_t[_bufSize_X];
@@ -20,46 +20,46 @@ void AmadeusLCD::_makeBuffer(uint8_t charsExtra, uint8_t rowsExtra) {
 }
 
 void AmadeusLCD::init(const uint8_t *font, uint8_t charsExtra, uint8_t rowsExtra, int espacioTop) {
-    _u8g2.begin();
-    _u8g2.setFont(font);
+    _u8g2->begin();
+    _u8g2->setFont(font);
     _makeBuffer(charsExtra, rowsExtra);
-    _espacioTop = (espacioTop == (-1)) ? (_u8g2.getMaxCharHeight() / 3) : espacioTop;
+    _espacioTop = (espacioTop == (-1)) ? (_u8g2->getMaxCharHeight() / 3) : espacioTop;
 }
 
 void AmadeusLCD::_changeFont(const uint8_t *font, uint8_t charsExtra, uint8_t rowsExtra, int espacioTop) {
     _freeBuffer();
-    _u8g2.setFont(font);
+    _u8g2->setFont(font);
     _makeBuffer(charsExtra, rowsExtra);
-    _espacioTop = (espacioTop == (-1)) ? (_u8g2.getMaxCharHeight() / 3) : espacioTop;
+    _espacioTop = (espacioTop == (-1)) ? (_u8g2->getMaxCharHeight() / 3) : espacioTop;
 }
 
 void AmadeusLCD::drawBitmap(const uint8_t *bitmap, uint16_t width, uint16_t height, uint16_t crop) {    
-    _u8g2.firstPage();
+    _u8g2->firstPage();
     do {
-        _u8g2.setDrawColor( (_colorFliped) ? 1 : 0 );
-        _u8g2.drawBox(0, 0, _u8g2.getDisplayWidth(), _u8g2.getDisplayHeight());
-        _u8g2.setDrawColor( (_colorFliped) ? 0 : 1 );
-        _u8g2.drawXBMP((_u8g2.getDisplayWidth()-width)/2, (_u8g2.getDisplayHeight()-height)/2, width, height, bitmap);
+        _u8g2->setDrawColor( (_colorFliped) ? 1 : 0 );
+        _u8g2->drawBox(0, 0, _u8g2->getDisplayWidth(), _u8g2->getDisplayHeight());
+        _u8g2->setDrawColor( (_colorFliped) ? 0 : 1 );
+        _u8g2->drawXBMP((_u8g2->getDisplayWidth()-width)/2, (_u8g2->getDisplayHeight()-height)/2, width, height, bitmap);
         if ( crop > 0 ) {
             // el crop es del color del fondo
-            _u8g2.setDrawColor( (_colorFliped) ? 1 : 0 );   
-            _u8g2.drawBox(0, 0, crop/2, _u8g2.getDisplayHeight());
-            _u8g2.drawBox(_u8g2.getDisplayWidth()-(crop/2), 0, crop/2, _u8g2.getDisplayHeight());
-            _u8g2.setDrawColor( (_colorFliped) ? 0 : 1 );
+            _u8g2->setDrawColor( (_colorFliped) ? 1 : 0 );   
+            _u8g2->drawBox(0, 0, crop/2, _u8g2->getDisplayHeight());
+            _u8g2->drawBox(_u8g2->getDisplayWidth()-(crop/2), 0, crop/2, _u8g2->getDisplayHeight());
+            _u8g2->setDrawColor( (_colorFliped) ? 0 : 1 );
         }
-    } while( _u8g2.nextPage() );
+    } while( _u8g2->nextPage() );
 }
 
 void AmadeusLCD::drawBitmap_Curtain(const uint8_t *bitmap, uint16_t width, uint16_t height, 
     unsigned long millisLength, unsigned long millisRefresh) 
 {
     uint16_t div = millisLength / millisRefresh;
-    uint16_t crop = _u8g2.getDisplayWidth();
+    uint16_t crop = _u8g2->getDisplayWidth();
     while(1) {
         drawBitmap(bitmap, width, height, crop);
         if ( crop == 0 )
             break;
-        crop = (crop > (_u8g2.getDisplayWidth()/div)) ? (crop - (_u8g2.getDisplayWidth()/div)) : 0;
+        crop = (crop > (_u8g2->getDisplayWidth()/div)) ? (crop - (_u8g2->getDisplayWidth()/div)) : 0;
         delay(millisRefresh);
     }
 }
@@ -86,25 +86,25 @@ void AmadeusLCD::_bufferRenglonVacio(uint8_t row) {
 void AmadeusLCD::_sendBuffer() {
     char letterBuffer[] = " ";
 
-    _u8g2.firstPage();
+    _u8g2->firstPage();
     do {
-        _u8g2.setDrawColor( (_colorFliped) ? 1 : 0 );
-        _u8g2.drawBox(0, 0, _u8g2.getDisplayWidth(), _u8g2.getDisplayHeight());
-        _u8g2.setDrawColor( (_colorFliped) ? 0 : 1 );
+        _u8g2->setDrawColor( (_colorFliped) ? 1 : 0 );
+        _u8g2->drawBox(0, 0, _u8g2->getDisplayWidth(), _u8g2->getDisplayHeight());
+        _u8g2->setDrawColor( (_colorFliped) ? 0 : 1 );
 
         if ( _raining ) {
             for( uint8_t f=0 ; f<_numRains ; f++)  // Draw each snowflake:
-                //_u8g2.drawXBMP(_rainArray[f][0], _rainArray[f][1], 
-                _u8g2.drawPixel(_rainArray[f][0], _rainArray[f][1]);
+                //_u8g2->drawXBMP(_rainArray[f][0], _rainArray[f][1], 
+                _u8g2->drawPixel(_rainArray[f][0], _rainArray[f][1]);
         }
 
         for (uint16_t i=0 ; i<(_bufSize_Y) ; i++) {
             for (uint16_t j=0 ; j<_bufSize_X ; j++ ) {
                 letterBuffer[0] = _log_buffer[i][j];
-                _u8g2.drawStr( getEspacioLetter()*j, getAlturaRenglon(i+1), letterBuffer );
+                _u8g2->drawStr( getEspacioLetter()*j, getAlturaRenglon(i+1), letterBuffer );
             }
         }
-    } while ( _u8g2.nextPage() );
+    } while ( _u8g2->nextPage() );
 
     if ( _raining ) {
         // update position
@@ -113,8 +113,8 @@ void AmadeusLCD::_sendBuffer() {
             // If snowflake is off the bottom of the screen...
             if (_rainArray[f][1] < _rainArray[f][2]) {
                 // Reinitialize to a random position, just off the top
-                _rainArray[f][0]   = random(0, _u8g2.getDisplayWidth());
-                _rainArray[f][1]   = _u8g2.getDisplayHeight();
+                _rainArray[f][0]   = random(0, _u8g2->getDisplayWidth());
+                _rainArray[f][1]   = _u8g2->getDisplayHeight();
                 _rainArray[f][2] = random(1, 4);
             }
         }
@@ -122,9 +122,9 @@ void AmadeusLCD::_sendBuffer() {
 }
 
 void AmadeusLCD::_clearScreen() {
-    _u8g2.firstPage();
+    _u8g2->firstPage();
     do {
-    } while ( _u8g2.nextPage() );
+    } while ( _u8g2->nextPage() );
 }
 
 void AmadeusLCD::setRain(boolean r, uint8_t numRains) {
@@ -137,8 +137,8 @@ void AmadeusLCD::setRain(boolean r, uint8_t numRains) {
             _rainArray[i] = new uint16_t[3];
 
         for( uint8_t f=0 ; f<_numRains ; f++) {
-            _rainArray[f][0]   = random(1, _u8g2.getDisplayWidth());
-            _rainArray[f][1]   = random(0, _u8g2.getDisplayHeight());
+            _rainArray[f][0]   = random(1, _u8g2->getDisplayWidth());
+            _rainArray[f][1]   = random(0, _u8g2->getDisplayHeight());
             _rainArray[f][2] = random(1, 3);
         }
     }
