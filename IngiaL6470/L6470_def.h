@@ -11,6 +11,7 @@ struct l6470_Status_t {
     motorStatus_t mot_status;
     bool notperf_cmd;
     bool wrong_cmd;
+    bool cmd_error;
     bool uvlo;
     bool th_wrn;
     bool th_sd;

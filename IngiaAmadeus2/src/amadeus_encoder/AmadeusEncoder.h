@@ -71,11 +71,23 @@ public:
     getButton();
     return (digitalRead(pinBTN) == pinsActive);
   }
+  bool isAnyClicked() {
+    switch(getButton()) {
+      case Clicked:
+      case DoubleClicked:
+        return true;
+      default:
+        return false;
+    }
+  }
   bool isClicked() {
     return (getButton() == Clicked);
   }
   bool isDoubleClicked() {
     return (getButton() == DoubleClicked);
+  }
+  bool isHeld() {
+    return (getButton() == Held);
   }
   void setHoldTime(uint16_t millis) {
     ENC_HOLDTIME = millis;

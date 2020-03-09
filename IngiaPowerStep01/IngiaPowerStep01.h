@@ -10,8 +10,8 @@
 class IngiaPowerStep01 : public IngiaST_StepperDriver
 {
     public:
-        IngiaPowerStep01(uint8_t csPin, uint8_t rstPin = 0)
-            : IngiaST_StepperDriver(csPin, rstPin)  {  }
+        IngiaPowerStep01(uint8_t csPin, uint8_t rstPin = 0, SoftSPI * spi = NULL)
+            : IngiaST_StepperDriver(csPin, rstPin, spi)  {  }
         
 
     public:
@@ -32,14 +32,42 @@ class IngiaPowerStep01 : public IngiaST_StepperDriver
         powerstep01_Status_t parseStatus(uint16_t status);
 
         // ------------------- Metodos Secundarios -------------------
-        powerstep01_Status_t getStatus(void) {
+        powerstep01_Status_t getStatusParsed(void) {
             return parseStatus(getParam(POWERSTEP01_STATUS));
         }
-        void setposition(int32_t absPos) {
+        powerstep01_Status_t getAndClearStatusParsed(void) {
+            return parseStatus(getAndClearStatus());
+        }
+        uint16_t getStatus(void) {
+            return getParam(POWERSTEP01_STATUS);
+        }
+        void setPosition(int32_t absPos) {
             setParam(POWERSTEP01_ABS_POS, (uint32_t)absPos);
         }
         int32_t getPosition(void) {
-            return getParam(POWERSTEP01_ABS_POS);
+            return convertPosition( getParam(POWERSTEP01_ABS_POS) );
+        }
+        void setMaxSpeed(float speed) {
+            setParam(POWERSTEP01_MAX_SPEED, max_spd_steps_s_to_reg_val(speed));
+        }
+        void setMinSpeed(float speed) {
+            setParam(POWERSTEP01_MIN_SPEED, min_spd_steps_s_to_reg_val(speed));
+        }
+        void searchZero(direction_t direction, float speed_steps_s, float min_speed = 300) {
+            if ( getStatusParsed().sw_f != SW_CLOSED )
+                runSwitch(direction, speed_steps_s, false);
+            while( getStatusParsed().busy )
+                delay(100);
+            /*
+            releaseSwitch( (direction==FWD)?BWD:FWD, true );
+            while( getStatusParsed().busy )
+                delay(100);
+            */
+           run( (direction==FWD)?BWD:FWD, min_speed );
+           while( getStatusParsed().sw_f == SW_CLOSED )
+                delay(10);
+            hardStop();
+            setPosition(0);
         }
         
         /*

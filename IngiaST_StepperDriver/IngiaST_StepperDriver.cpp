@@ -8,9 +8,18 @@ void IngiaST_StepperDriver::begin() {
     }
 
     // spin initialization
-    SPI.begin();
-    SPI.beginTransaction(SPISettings(HW_SPI_SPEED, MSBFIRST, SPI_MODE3)); 
-    SPI.endTransaction();
+    if ( softSPI == NULL ) {
+        SPI.begin();
+        SPI.beginTransaction(SPISettings(HW_SPI_SPEED, MSBFIRST, SPI_MODE3)); 
+        SPI.endTransaction();
+    }
+    else {
+        //softSPI->setMosiIdle(HIGH);
+        softSPI->setBitOrder(MSBFIRST);
+        softSPI->setDataMode(SPI_MODE3);
+        //softSPI->setClockDivider(SW_SPI_CLKDIV);
+        softSPI->begin();
+    }
 }
 
 
@@ -116,7 +125,7 @@ uint32_t IngiaST_StepperDriver::getParam(uint32_t param, uint8_t len) {
         WriteBytes(&spiTxBursts[loop][0], &spiRxBursts[loop][0]);
     }
     spiRxData = ((uint32_t)spiRxBursts[1][spiIndex] << 16)|
-                (spiRxBursts[2][spiIndex] << 8) | (spiRxBursts[3][spiIndex]);    
+                ((uint32_t)spiRxBursts[2][spiIndex] << 8) | ((uint32_t)spiRxBursts[3][spiIndex]);    
     return (spiRxData);
 }
 
@@ -161,8 +170,14 @@ void IngiaST_StepperDriver::WriteBytes(uint8_t *pByteToTransmit, uint8_t *pRecei
 }
 
 uint8_t IngiaST_StepperDriver::spi_read_write(uint8_t c) {
-    SPI.beginTransaction(SPISettings(HW_SPI_SPEED, MSBFIRST, SPI_MODE3)); 
-    uint8_t salida; salida = SPI.transfer(c);
-    SPI.endTransaction(); 
+    uint8_t salida; 
+    if ( softSPI == NULL ) {
+        SPI.beginTransaction(SPISettings(HW_SPI_SPEED, MSBFIRST, SPI_MODE3)); 
+        salida = SPI.transfer(c);
+        SPI.endTransaction(); 
+    }
+    else {
+        salida = softSPI->transfer(c);
+    }
     return salida;
 }

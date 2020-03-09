@@ -3,17 +3,20 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include <SoftSPI.h>
 
 #include "ST_StepperDriver_def.h"
 
-#define HW_SPI_SPEED 1000000
+#define HW_SPI_SPEED    1000000
+#define SW_SPI_CLKDIV   SPI_CLOCK_DIV2
 
 class IngiaST_StepperDriver
 {
     public:
-        IngiaST_StepperDriver(uint8_t csPin, uint8_t rstPin = 0) {
+        IngiaST_StepperDriver(uint8_t csPin, uint8_t rstPin = 0, SoftSPI *spi = NULL) {
             reset = rstPin;
             ssel = csPin;
+            softSPI = spi;
         }
 
         void begin();
@@ -38,8 +41,13 @@ class IngiaST_StepperDriver
         void goToDir(direction_t direction, int32_t abs_pos) {
             sendCommand((uint8_t)ST_DRIVER_GO_TO_DIR|(uint8_t)direction, abs_pos);  
         }
-        void goUntil(motorAction_t action,direction_t direction, float speed_steps_s) {
+        void runSwitch(direction_t direction, float speed_steps_s, bool resetPos = false) {
+            uint8_t action = (resetPos) ? ACTION_RESET : ACTION_COPY;
             sendCommand( (uint8_t)ST_DRIVER_GO_UNTIL|(uint8_t)action|(uint8_t)direction, speed_steps_s_to_reg_val(speed_steps_s));
+        }
+        void releaseSwitch(direction_t direction, bool resetPos = false) {
+            uint8_t action = (resetPos) ? ACTION_RESET : ACTION_COPY;
+            sendCommand( (uint8_t)ST_DRIVER_RELEASE_SW|(uint8_t)action|(uint8_t)direction, 0 );
         }
         void hardStop(void) {
             sendCommand(ST_DRIVER_HARD_STOP, 0);
@@ -47,12 +55,17 @@ class IngiaST_StepperDriver
         void run(direction_t direction, float speed_steps_s) {
             sendCommand((uint8_t)ST_DRIVER_RUN|(uint8_t)direction, speed_steps_s_to_reg_val(speed_steps_s));
         }
-
+        void sendEnsurance() {
+            for( uint8_t i=0 ; i<3 ; i++ )
+                spi_read_write(ST_DRIVER_NOP);
+        }
+        
     protected:
         uint8_t ssel, reset;
         uint8_t spiTxBursts[CMD_ARG_MAX_NB_BYTES][MAX_NUMBER_OF_DEVICES];
         uint8_t spiRxBursts[CMD_ARG_MAX_NB_BYTES][MAX_NUMBER_OF_DEVICES];
         uint8_t numberOfDevices = 1;
+        SoftSPI * softSPI = NULL;
 
         void WriteBytes(uint8_t *pByteToTransmit, uint8_t *pReceivedByte);
         uint8_t spi_read_write(uint8_t c);
@@ -76,6 +89,30 @@ class IngiaST_StepperDriver
         **********************************************************/
         float speed_reg_val_to_steps_s(uint32_t regVal) {
             return (((float)(regVal))*0.01490116119f);
+        }
+
+        int32_t convertPosition(uint32_t abs_position_reg)  {
+            /*
+            // soluciono el error en el ultimo byte de comunicacion
+            if ( (abs_position_reg & 0x8000) &&  )
+                abs_position_reg &= 0xFFFF;
+            else
+                abs_position_reg &= 0x7FFFFF;
+            */
+
+            int32_t operation_result;
+            if (abs_position_reg & ST_DRIVER_ABS_POS_SIGN_BIT_MASK) {
+                /* Negative register value */
+                abs_position_reg = ~abs_position_reg;
+                abs_position_reg += 1;
+
+                operation_result = (int32_t) (abs_position_reg & ST_DRIVER_ABS_POS_VALUE_MASK);
+                operation_result = -operation_result;
+            } 
+            else {
+                operation_result = (int32_t) abs_position_reg;
+            }
+            return operation_result;
         }
 };
 

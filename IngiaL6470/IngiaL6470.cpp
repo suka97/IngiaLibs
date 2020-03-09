@@ -80,6 +80,8 @@ l6470_Status_t IngiaL6470::parseStatus(uint16_t status) {
     salida.sck_mod = (status & L6470_STATUS_SCK_MOD) ? true : false;
     salida.mot_status = (motorStatus_t)((status & L6470_STATUS_MOT_STATUS) >> 5);
     salida.dir = (direction_t)((status & L6470_STATUS_DIR) >> 4);
+    
+    salida.cmd_error = salida.notperf_cmd || salida.wrong_cmd;
 
     return salida;
 }

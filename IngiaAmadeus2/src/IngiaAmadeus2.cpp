@@ -100,6 +100,7 @@ void IngiaAmadeus2::cambiarVarMostrando(char *nombre, long *var, long valmin, lo
     static boolean borderValueSituation = false;    // indica si la ultima vez estaba escrito max o min 
     
     if ( restart ) {
+        encoder->setAccelerationEnabled(true);
         lcdClear();
         print(nombre, 0, LCD_CENTER);
         if ( unidad != NULL )
@@ -379,15 +380,17 @@ uint8_t IngiaAmadeus2::_splitOpciones(char const *str, char** buffer, uint8_t wo
 }
 
 int IngiaAmadeus2::menu(const char* opciones) {
-    long cantItems = _getOpcionesSize(opciones, ',');
+    uint8_t cantItems = _getOpcionesSize(opciones, ',');
     uint8_t wordSize = getMaxLetters()-1;
     char items[cantItems][wordSize];
     _splitOpciones(opciones, (char**)items, wordSize, ',');
+    if ( _menuPos > (cantItems-1) )
+        _menuPos = 0;
 
     encoder->setAccelerationEnabled(false);
 
-    uint8_t topIndex = 0, lastRowIndex = 0;
-    long indexMenu = 0;
+    uint8_t topIndex = (_menuPos > (cantItems-getMaxRows())) ? (cantItems-getMaxRows()) : _menuPos;
+    uint8_t lastRowIndex = _menuPos;
     boolean printMenuFlag = true;
     AmadeusEncoder::ButtonStatus_t button = encoder->getButton();
     while ( button == AmadeusEncoder::Open ) 
@@ -400,31 +403,31 @@ int IngiaAmadeus2::menu(const char* opciones) {
                 }
             }
             printMenuFlag = false;  
-            print(">", (indexMenu - topIndex), LCD_LEFT, false, 0);
+            print(">", (_menuPos - topIndex), LCD_LEFT, false, 0);
         }
 
-        if ( cambiarVar(&indexMenu, 0, (cantItems-1)) ) {
+        if ( cambiarVar( (long*)&_menuPos, 0, (cantItems-1) ) ) {
             // si me pase de la zona imprimible
-            if ( (indexMenu+1) > (topIndex + getMaxRows()) ) {
+            if ( (_menuPos+1) > (topIndex + getMaxRows()) ) {
                 topIndex++;
                 printMenuFlag = true;
             }
-            else if ( (indexMenu < topIndex) ) {
+            else if ( (_menuPos < topIndex) ) {
                 topIndex--;
                 printMenuFlag = true;
             }
             else {
                 print(" ", (lastRowIndex - topIndex), LCD_LEFT, false, 0, false); 
-                print(">", (indexMenu - topIndex), LCD_LEFT, false, 0);
+                print(">", (_menuPos - topIndex), LCD_LEFT, false, 0);
             }
-            lastRowIndex = indexMenu;
+            lastRowIndex = _menuPos;
         }
         
         button = encoder->getButton();
     }
 
     // devuelvo -1 si mantuvo apretado (osea cancelo)
-    return (button == AmadeusEncoder::DoubleClicked) ? (-1) : (int)indexMenu;
+    return (button == AmadeusEncoder::DoubleClicked) ? (-1) : (int)_menuPos;
 }
 
 void IngiaAmadeus2::move(uint8_t motorNumber, long pasos) {

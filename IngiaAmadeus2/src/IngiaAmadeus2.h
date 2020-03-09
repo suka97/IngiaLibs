@@ -16,6 +16,12 @@
 #include "splash_INGIA.h"
 #include "IngiaAmadeus2_PINS.h"
 
+// Constants
+typedef enum {
+    NO_FLAGS   = 0x0,
+    NO_DRIVERS = 0x1
+} AmadeusFlags_t;
+
 
 class IngiaAmadeus2 : public AmadeusLCD
 {
@@ -61,6 +67,7 @@ private:
     const long *_valmin;
     const long *_valmax;
     int _cantMenus = 0, _cantMotores;
+    int _menuPos = 0;
     uint16_t _xPrintIndex = 0, _yPrintIndex = 0;
 
 
@@ -103,6 +110,27 @@ public:
             _valmax = valmax; _cantMenus = cantMenus;
             instance = this;
         }
+    IngiaAmadeus2(const char * const *menus, const long *valoresDefault, const char * const *unids, const long *valmin, const long *valmax, const int cantMenus, 
+        AmadeusFlags_t flags) :
+            AmadeusLCD()
+        {
+            _setU8G2( new U8G2_SSD1306_128X64_NONAME_1_4W_HW_SPI(U8G2_R0, PIN_LCD_CS, PIN_LCD_DC, PIN_LCD_RES) );
+            encoder = new AmadeusEncoder(PIN_ENCODER_A, PIN_ENCODER_B, PIN_ENCODER_BUTTON, ENCODER_STEPS_PER_NOTCH, LOW);
+
+            if ( flags & NO_DRIVERS ) {
+                _cantMotores = 0;
+            }
+            else {
+                stepper = new AccelStepper *[2];
+                stepper[0] = new AccelStepper(AccelStepper::DRIVER, PIN_STEPPER1_PULSO, PIN_STEPPER1_DIRECCION);
+                stepper[1] = new AccelStepper(AccelStepper::DRIVER, PIN_STEPPER2_PULSO, PIN_STEPPER2_DIRECCION);
+                _cantMotores = 2;
+            }
+
+            _menus = menus; _valores = valoresDefault; _unids = unids; _valmin = valmin; 
+            _valmax = valmax; _cantMenus = cantMenus;
+            instance = this;
+        }
     boolean begin_CustomHardWare();
     boolean begin( uint8_t pinModeA = OUTPUT, uint8_t pinModeB = OUTPUT, uint8_t pinModeC = OUTPUT, 
         uint8_t pinModeD = OUTPUT, uint8_t pinModeE = OUTPUT, uint8_t pinModeF = OUTPUT);
@@ -132,6 +160,7 @@ public:
     boolean menuParametros();
     void jogEncoder(uint8_t motorNumber = 1, float defaultSpeed = 2000);
     int menu(const char* opciones);
+    void resetMenuIndex() { _menuPos = 0; }
     boolean cambiarVar(long *var, long valmin, long valmax, int *flagMaxMin = NULL);
     void cambiarVarMostrando(char *nombre, long *var, long valmin, long valmax, char *unidad = NULL, boolean restart = false);
     void menuConfig() { while(menuParametros()); }
