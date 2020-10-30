@@ -1,21 +1,9 @@
 #include "AmadeusLCD.h"
 
-
-void AmadeusLCD::_freeBuffer() {
-    for( uint8_t i=0 ; i<_bufSize_Y ; ++i ) {
-        delete [] _log_buffer[i];
-    }
-    delete [] _log_buffer;
-}
-
 void AmadeusLCD::_makeBuffer(uint8_t charsExtra, uint8_t rowsExtra) {
-    // pido memoria dinamica
+    // ajusto segun el lcd (ya no es dinamica la cosa)
     _bufSize_X = (_u8g2->getDisplayWidth() / _u8g2->getMaxCharWidth()) + charsExtra + 1;
     _bufSize_Y = (_u8g2->getDisplayHeight() / _u8g2->getMaxCharHeight()) + rowsExtra;
-    _log_buffer = new uint8_t *[_bufSize_Y]; 
-    for ( uint8_t i=0 ; i<_bufSize_Y ; i++ )
-        _log_buffer[i] = new uint8_t[_bufSize_X];
-
     _clearBuffer();
 }
 
@@ -27,7 +15,6 @@ void AmadeusLCD::init(const uint8_t *font, uint8_t charsExtra, uint8_t rowsExtra
 }
 
 void AmadeusLCD::_changeFont(const uint8_t *font, uint8_t charsExtra, uint8_t rowsExtra, int espacioTop) {
-    _freeBuffer();
     _u8g2->setFont(font);
     _makeBuffer(charsExtra, rowsExtra);
     _espacioTop = (espacioTop == (-1)) ? (_u8g2->getMaxCharHeight() / 3) : espacioTop;

@@ -67,11 +67,16 @@ void AmadeusEncoder::service(void)
     moved = true;    
   }
 
-  if (accelerationEnabled && moved) {
+  if (accelerationEnabled) {
     // increment accelerator if encoder has been moved
-    if (acceleration <= (ENC_ACCEL_TOP - ENC_ACCEL_INC)) {
-      acceleration += ENC_ACCEL_INC;
+    if (moved) {
+      lastMoved = now;
+      if (acceleration <= (ENC_ACCEL_TOP - ENC_ACCEL_INC))
+        acceleration += ENC_ACCEL_INC;
     }
+    // si no toco la perilla se va la aceleracion
+    else if ( (now - lastMoved) >= 750 )
+      acceleration = 0;
   }
 
   // ---------------------------  handle button -----------------------------------
@@ -152,9 +157,9 @@ int16_t AmadeusEncoder::getValue(void) {
 
 // ----------------------------------------------------------------------------
 
-AmadeusEncoder::Button AmadeusEncoder::getButton(void) {
+AmadeusEncoder::Button AmadeusEncoder::getButton(bool reset) {
   AmadeusEncoder::Button ret = button;
-  if (button != AmadeusEncoder::Held) {
+  if ( (button!=AmadeusEncoder::Held) && reset ) {
     button = AmadeusEncoder::Open; // reset
   }
   return ret;

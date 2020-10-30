@@ -3,24 +3,19 @@
 
 #include "AmadeusLCD_SpecialChars.h"
 #include "u8g2lib/U8g2lib.h"
+#include "PrintFlags.h"
 
-
-// Constants
-typedef enum {
-    LCD_LEFT = 0,
-    LCD_RIGHT = 1,
-    LCD_CENTER = 2
-} PrintFlag_t;
-
+#define AMADEUS_LCD_BUFX_MAX_SIZE 25
+#define AMADEUS_LCD_BUFY_MAX_SIZE 4
 
 class AmadeusLCD
 {
 // -------------------------------------------- Public Members -------------------------------------------------
 public:
     // Constructor, Deconstructor and Initialization
-    AmadeusLCD(U8G2 *u8g2) { _u8g2 = u8g2; }
-    AmadeusLCD() { }
-    ~AmadeusLCD() { _freeBuffer(); };
+    AmadeusLCD(U8G2 *u8g2) { 
+        _u8g2 = u8g2; 
+    }
     void init(const uint8_t *font, uint8_t charsExtra = 0, uint8_t rowsExtra = 0, int espacioTop = -1);
     
 
@@ -44,7 +39,7 @@ public:
 
     // Getters
     uint16_t getEspacioLetter() { return (_u8g2->getDisplayWidth() / _bufSize_X); };
-    uint8_t getMaxLetters() { return (_bufSize_X); }
+    uint8_t getMaxLetters() { return (_bufSize_X-1); }
     uint8_t getMaxRows() { return _bufSize_Y; }
     void setRain(boolean r, uint8_t numRains = 10);
     uint16_t getAlturaRenglon(uint8_t renglon) {
@@ -53,9 +48,9 @@ public:
     
 
     // Print
-    template <class printTemplate>
-    void print(printTemplate text, uint8_t row = 0, PrintFlag_t printFlag = LCD_LEFT, boolean clearFlag = false, int startIndex = -1, boolean printNow = true) {
-        String str = String(text);
+    //template <class printTemplate>
+    void print(String str, uint8_t row = 0, uint8_t printFlag = LCD_LEFT, boolean clearFlag = false, int startIndex = -1, boolean printNow = true) {
+        //String str = String(text);
 
         if (clearFlag) {
             _clearBuffer();
@@ -93,7 +88,7 @@ protected:
 
     // Internal Pointers and Variables
     U8G2 * _u8g2;
-    uint8_t **_log_buffer;
+    uint8_t _log_buffer[AMADEUS_LCD_BUFY_MAX_SIZE][AMADEUS_LCD_BUFX_MAX_SIZE];
     uint8_t _bufSize_X, _bufSize_Y;
     uint8_t _index_X=0, _index_Y=0;
     uint8_t _espacioTop;
@@ -105,13 +100,10 @@ protected:
 
 
     // Protected Methods
-    void _setU8G2(U8G2 *u8g2) { _u8g2 = u8g2; }
     void _clearBuffer();
     void _sendBuffer();
     void _bufferRenglonVacio(uint8_t row);
-    uint8_t _verExcepciones(char letter);
     void _makeBuffer(uint8_t charsExtra = 0, uint8_t rowsExtra = 0);
-    void _freeBuffer();
     void _clearScreen();
     void _changeFont(const uint8_t *font, uint8_t charsExtra = 0, uint8_t rowsExtra = 0, int espacioTop = -1);
 };

@@ -37,6 +37,7 @@ private:
   const bool pinsActive;
   volatile int16_t delta;
   volatile int16_t last;
+  uint32_t lastMoved;
   uint8_t steps;
   volatile uint16_t acceleration;
   volatile Button button;
@@ -51,7 +52,7 @@ public:
 
   void service(void);  
   int16_t getValue(void);
-  Button getButton(void);
+  Button getButton(bool reset = true);
   void setDoubleClickEnabled(const bool &d) {
     doubleClickEnabled = d;
   }
@@ -71,23 +72,29 @@ public:
     getButton();
     return (digitalRead(pinBTN) == pinsActive);
   }
-  bool isAnyClicked() {
-    switch(getButton()) {
-      case Clicked:
-      case DoubleClicked:
-        return true;
-      default:
-        return false;
-    }
-  }
   bool isClicked() {
-    return (getButton() == Clicked);
+    if ( getButton(false) == Clicked ) {
+      getButton();
+      return true;
+    }
+    else
+      return false;
   }
   bool isDoubleClicked() {
-    return (getButton() == DoubleClicked);
+    if ( getButton(false) == DoubleClicked ) {
+      getButton();
+      return true;
+    }
+    else
+      return false;
   }
   bool isHeld() {
-    return (getButton() == Held);
+    if ( getButton(false) == Held ) {
+      getButton();
+      return true;
+    }
+    else
+      return false;
   }
   void setHoldTime(uint16_t millis) {
     ENC_HOLDTIME = millis;
