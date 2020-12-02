@@ -10,6 +10,7 @@
 #include <EEPROM.h>
 
 #include "../amadeus_lcd/PrintFlags.h"
+#define MAX_MENU_LEN    25
 
 class AmadeusBase
 {
@@ -65,8 +66,7 @@ protected:
     long _menuPos = 0;
 
     // Internal Methods    
-    uint8_t _getOpcionesSize(char const *str, char index);
-    uint8_t _splitOpciones(char const *str, char** buffer, uint8_t wordSize, char index);
+    uint8_t _splitOpciones(char const *str, uint16_t *startIndexes, uint16_t *endIndexes, uint8_t buffSize, char index);
 
     // Interrupt every 1ms for encoder
     static AmadeusBase *instance;

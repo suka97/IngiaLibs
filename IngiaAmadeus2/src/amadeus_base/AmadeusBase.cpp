@@ -46,13 +46,13 @@ bool AmadeusBase::menuParametros() {
         if ( i!=(_cantMenus-1) ) strcat(buffer, ",");
     }
     
-    int opcion = menu(buffer);
-    if ( opcion = (-1) ) {
-        strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[opcion])));
-        strcpy_P(buffer_unid, (char*)pgm_read_word(&(_unids[opcion])));
-        long bufferVal = getVal(opcion);
-        long buffer_valMin = pgm_read_word_near(_valmin + opcion);
-        long buffer_valMax = pgm_read_word_near(_valmax + opcion);
+    int opcion = menu(buffer); 
+    if ( opcion != (-1) ) {
+        strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[opcion]))); 
+        strcpy_P(buffer_unid, (char*)pgm_read_word(&(_unids[opcion]))); 
+        long bufferVal = getVal(opcion); 
+        long buffer_valMin = pgm_read_word_near(_valmin + opcion); 
+        long buffer_valMax = pgm_read_word_near(_valmax + opcion); 
         while ( opcion != (-1) ) {
             cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
             bool saveVal = false;
@@ -62,6 +62,8 @@ bool AmadeusBase::menuParametros() {
                 if ( backPressed() ) break;
                 if ( custom1Pressed() ) {
                     bufferVal = pgm_read_word_near(_valores + opcion);
+                    cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
+                    while(custom1Pressed());
                 }
             }
             if ( saveVal ) {
@@ -75,47 +77,30 @@ bool AmadeusBase::menuParametros() {
     return false;
 }
 
-uint8_t AmadeusBase::_getOpcionesSize(char const *str, char index) {
+
+uint8_t AmadeusBase::_splitOpciones(char const *str, uint16_t *startIndexes, uint16_t *endIndexes, uint8_t buffSize, char index) {
     uint16_t i=0;
-    uint8_t size = (str[0]!='\0') ? 1 : 0;
+    uint8_t wordIndex = 0;
 
-    // recorro para conocer el largo
-    while( str[i] != '\0' ) {
-        if( str[i] == index ) 
-            size++;
-        i++;
-    }
-
-    return size;
-}
-
-uint8_t AmadeusBase::_splitOpciones(char const *str, char** buffer, uint8_t wordSize, char index) {
-    uint8_t size = _getOpcionesSize(str, index);
-    uint16_t i=0, baseIndex = 0;
-    uint8_t relativeIndex = 0;
-
-    for( uint8_t itemIndex=0 ; itemIndex<size ; itemIndex++ ) {
-        baseIndex = itemIndex * wordSize;
-        relativeIndex = 0;
-        while( (str[i]!='\0') && (str[i]!=index) ) {
-            if ( relativeIndex < (wordSize-1) ) {
-                ((char*)buffer)[relativeIndex + baseIndex] = str[i];
-                relativeIndex++;
-            }
-            i++;
+    startIndexes[0] = 0;
+    for( i=0 ; wordIndex<buffSize && str[i]!='\0' ; i++ ) {
+        if ( str[i] == index ) {
+            endIndexes[wordIndex] = i-1;
+            wordIndex++;
+            startIndexes[wordIndex] = i+1;
         }
-        ((char*)buffer)[relativeIndex + baseIndex] = '\0';
-        i++;
     }
+    endIndexes[wordIndex] = i-1; 
 
-    return size;   // devuelve el tamaño final
+    return (wordIndex);   // devuelve el tamaño final
 }
+
 
 int AmadeusBase::menu(const char* opciones) {
-    uint8_t cantItems = _getOpcionesSize(opciones, ',');        
-    uint8_t wordSize = getMaxLetters()-1;                       
-    char items[cantItems][wordSize];                            
-    _splitOpciones(opciones, (char**)items, wordSize, ',');     
+    uint8_t maxWordLen = getMaxLetters()+1;
+    char wordBuffer[maxWordLen] = "";
+    uint16_t startIndexes[MAX_MENU_LEN], endIndexes[MAX_MENU_LEN];      
+    uint8_t cantItems = _splitOpciones(opciones, startIndexes, endIndexes, MAX_MENU_LEN, ',');     
     if ( _menuPos > (cantItems-1) )
         _menuPos = 0;
 
@@ -125,14 +110,16 @@ int AmadeusBase::menu(const char* opciones) {
     if ( cantItems > getMaxRows() ) 
         topIndex = (_menuPos > (cantItems-getMaxRows())) ? (cantItems-getMaxRows()) : _menuPos;     
     uint8_t lastRowIndex = _menuPos;
-    bool printMenuFlag = true;                                  
+    bool printMenuFlag = true;          
     while ( !enterPressed() ) 
     {
         if (printMenuFlag) { 
             lcdClear();
             for ( int i=0 ; i<getMaxRows() ; i++ ) {
                 if ( (i+topIndex) < cantItems ) {
-                    print( String(" ") + String(items[i+topIndex]), i, LCD_LEFT, false, 1, false );     
+                    memset((void*)wordBuffer, '\0', maxWordLen);
+                    strncpy( wordBuffer, opciones+startIndexes[i+topIndex], endIndexes[i+topIndex]-startIndexes[i+topIndex]+1 );
+                    print( String(" ") + String(wordBuffer), i, LCD_LEFT, false, 1, false );     
                 }
             }
             printMenuFlag = false;  
