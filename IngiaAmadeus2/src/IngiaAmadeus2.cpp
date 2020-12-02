@@ -15,35 +15,39 @@ void IngiaAmadeus2::jogEncoder(uint8_t motorNumber, float defaultSpeed) {
 // ##################### IngiaAmadeus2_Base #######################
 // ################################################################
 
-
-
-
-// ################################################################
-// ##################### IngiaAmadeus2_Base #######################
-// ################################################################
-
 bool IngiaAmadeus2_Base::begin() {
-    Timer1.initialize(1000);
-    Timer1.attachInterrupt(timer1Isr); 
-
     init(MI_FUENTE, 5, 0, 0);      // inicializo lo de AmadeusLCD
     //drawBitmap_Curtain(logo_INGIA, LOGO_INGIA_WIDTH, LOGO_INGIA_HEIGHT, 12, 6);
     drawBitmap(logo_INGIA, LOGO_INGIA_WIDTH, LOGO_INGIA_HEIGHT);
     delay(1500);
     setRain(true, 20);
     for( uint8_t i=0 ; i<15 ; i++ ) {
-        print(F("www.ingia.com.ar"), 1, LCD_CENTER, true, -1, false);
+        print(F("ingia.com.ar"), 1, LCD_CENTER, true, -1, false);
         print(F("AMADEUS M2"), 0, LCD_CENTER, false, -1, true);
         delay(200);
     }
     setRain(false);
     lcdClear();
 
-    // checkeo que ninguno de los parametros este fuera de rango
+    // inicializo EEPROM
+    #ifndef __AVR__
+    EEPROM.begin(512); // EEPROM size
+    #endif
     for ( uint8_t i=0 ; i<_cantMenus ; i++ ) {
         if ( (getVal(i) < (long)pgm_read_dword(&_valmin[i])) || (getVal(i) > (long)pgm_read_dword(&_valmax[i])) )
             EEPROM.put ( sizeof(long)*i, pgm_read_dword(&_valores[i]) );
     }
+    #ifndef __AVR__
+    EEPROM.commit();
+    #endif
+
+    // init timer isr
+    #ifdef __AVR__
+        Timer1.initialize(1000);
+        Timer1.attachInterrupt(timer1Isr); 
+    #else
+        set_timer(true);
+    #endif
 
     // para que suelte el boton si lo tiene presionado
     bool mantuvoPresonado = encoderPtr->isPressed();
@@ -89,6 +93,84 @@ bool IngiaAmadeus2_Base::cambiarVar(long *var, long valmin, long valmax, int *fl
     }
 
     return changeFlag;
+}
+
+void IngiaAmadeus2_Base::cambiarString(const char *title, char *buffer, uint8_t size, char *opc) {
+    char opc_buffer[100];
+    char *m_opc = opc;
+    if ( opc == NULL ) {
+        uint8_t i;
+        for ( i=32 ; i<=125 ; i++ ) opc_buffer[i-32] = i;
+        opc_buffer[i] = '\0';
+        m_opc = opc_buffer;
+    }
+    uint32_t opcSize = strlen(m_opc);
+    setIncrementalAcceleration(false);
+
+    long letterIndex = 0;
+    uint8_t letter_startIndex = 0, last_letter = 0;
+    uint8_t str_len = strlen(buffer);
+    bool printFlag = true;
+    lcdClear();
+    print(title, 0, LCD_CENTER, false, -1, false);
+    while( !backPressed() ) {
+        // cambiar la letterIndex
+        if ( cambiarVar(&letterIndex, 0, str_len) || printFlag ) { 
+            printFlag = false;
+            clearRow(1); clearRow(2);
+            if ( str_len > getMaxLetters() ) {
+                uint8_t rel_index = letterIndex - letter_startIndex;
+                if ( last_letter < letterIndex ) {
+                    if ( rel_index>(getMaxLetters()/2) && (str_len-letter_startIndex)>=getMaxLetters() )
+                        letter_startIndex++;
+                }
+                else {
+                    if ( rel_index<(getMaxLetters()/2) && letter_startIndex>0 )
+                        letter_startIndex--;
+                }
+                last_letter = letterIndex;
+            }
+            if ( (str_len-letter_startIndex) >= getMaxLetters() ) print(">", 2, LCD_RIGHT, false, -1, false);
+            if ( letter_startIndex > 0 ) print("<", 2, LCD_LEFT, false, 0, false);
+            print("^", 2, LCD_LEFT, false, letterIndex-letter_startIndex, false);
+            print( String(buffer).substring(letter_startIndex,letter_startIndex+getMaxLetters()), 1, LCD_LEFT, false, 0 );
+            while(encoderPtr->isHeld()); // espero que suelte si lo tenia
+        }
+        // cambiar la letra
+        if ( enterPressed() && letterIndex<(size-1) ) {
+            if ( letterIndex == str_len ) {
+                buffer[letterIndex+1] = '\0';
+                str_len++;
+            }
+            long i = 0;
+            // find i si ya habia una letra
+            for ( uint8_t j=0 ; j<opcSize ; j++ ) {
+                if(m_opc[j]==buffer[letterIndex]) i=j;
+            }
+            printFlag = true;
+            print("*", 2, LCD_LEFT, false, letterIndex-letter_startIndex, false);
+            while( !enterPressed() ) {
+                if ( cambiarVar(&i, 0, opcSize) ) {
+                    buffer[letterIndex] = m_opc[i];
+                    printFlag = true;
+                }
+                if ( printFlag ) {
+                    printFlag = false;
+                    print( String(buffer).substring(letter_startIndex,letter_startIndex+getMaxLetters()), 
+                        1, LCD_LEFT, false, 0 );
+                }
+            }
+            print("^", 2, LCD_LEFT, false, letterIndex-letter_startIndex);
+        }
+        // borrar la letra
+        if ( encoderPtr->isHeld() && letterIndex<str_len ) {
+            String aux = buffer;
+            aux.remove(letterIndex,1);
+            aux.toCharArray(buffer, size);
+            str_len--;
+            printFlag = true;
+        }
+    }
 }
 
 bool IngiaAmadeus2_Base::login(char const *password) { 

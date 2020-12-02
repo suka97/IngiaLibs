@@ -47,11 +47,25 @@ class IngiaPowerStep01 : public IngiaST_StepperDriver
         int32_t getPosition(void) {
             return convertPosition( getParam(POWERSTEP01_ABS_POS) );
         }
+        void setAcceleration(float acc) {
+            setParam(POWERSTEP01_ACC, acc_dec_steps_s2_to_reg_val(acc));
+        }
+        void setDeceleration(float dec) {
+            setParam(POWERSTEP01_DEC, acc_dec_steps_s2_to_reg_val(dec));
+        }
         void setMaxSpeed(float speed) {
             setParam(POWERSTEP01_MAX_SPEED, max_spd_steps_s_to_reg_val(speed));
         }
         void setMinSpeed(float speed) {
             setParam(POWERSTEP01_MIN_SPEED, min_spd_steps_s_to_reg_val(speed));
+        }
+        void setStaticTval(float tval_mv) {
+            setParam(POWERSTEP01_TVAL_HOLD, t_val_ref_voltage_to_reg_val(tval_mv));
+        }
+        void setDynamicTval(float tval_mv) {
+            setParam(POWERSTEP01_TVAL_RUN, t_val_ref_voltage_to_reg_val(tval_mv));
+            setParam(POWERSTEP01_TVAL_ACC, t_val_ref_voltage_to_reg_val(tval_mv));
+            setParam(POWERSTEP01_TVAL_DEC, t_val_ref_voltage_to_reg_val(tval_mv));
         }
         void searchZero(direction_t direction, float speed_steps_s, float min_speed = 300) {
             if ( getStatusParsed().sw_f != SW_CLOSED )

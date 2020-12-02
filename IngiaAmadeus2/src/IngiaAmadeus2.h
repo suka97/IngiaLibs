@@ -9,7 +9,6 @@
 #include "splash_INGIA.h"
 #include "IngiaAmadeus2_PINS.h"
 #include "amadeus_base/AmadeusBase.h"
-#include "amadeus_modbus/IngiaAmadeus2_Modbus.h"
 
 
 class IngiaAmadeus2_Base : public AmadeusLCD, public AmadeusBase
@@ -57,6 +56,23 @@ public:
                 break;
         }
     }
+    // Timer config for ESP32
+    #ifndef __AVR__     
+        hw_timer_t * timer = NULL;
+        void set_timer(bool state) {
+            if(!state) {
+                if(timer) timerEnd(timer);
+                timer = NULL;
+            } else {
+                timer = timerBegin(3, 80, 1);//div 80
+                timerAttachInterrupt(timer, &timer1Isr, 1);
+                timerAlarmWrite(timer, 1000, true);//1ms
+                timerAlarmEnable(timer);
+            }
+        }
+    #else
+        void set_timer(bool state) {  }
+    #endif
 
 
     // Public Variables and Classes
@@ -82,7 +98,8 @@ public:
     bool cambiarVarIncremental(long *var, long valmin, long valmax, int *flagMaxMin = NULL) { 
         return cambiarVar(var, valmin, valmax, flagMaxMin); 
     }
-    
+    void cambiarString(const char *title, char *buffer, uint8_t size, char *opc = NULL);
+
 public:
     void setIncrementalAcceleration(bool en) { encoderPtr->setAccelerationEnabled(en); }
     bool enterPressed() {  
@@ -105,6 +122,8 @@ public:
         else
             return false; 
     }
+    bool custom1Pressed() { return encoderPtr->isHeld(); }
+    bool anyKeyPressed() { return (backPressed() || enterPressed()); }
     void onInterrupt() {
         encoderPtr->service();
         _encButtonStatus = encoderPtr->getButton(false);

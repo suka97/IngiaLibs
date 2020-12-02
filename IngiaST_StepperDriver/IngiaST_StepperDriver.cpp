@@ -71,7 +71,7 @@ uint16_t IngiaST_StepperDriver::getAndClearStatus(void) {
     uint32_t loop;
     uint8_t spiIndex = 0;
     
-    for (loop = 0; loop < numberOfDevices; loop++) {
+    for (loop = 0; loop < numberOfDevices; loop++) { 
         spiTxBursts[0][loop] = ST_DRIVER_NOP;
         spiTxBursts[1][loop] = ST_DRIVER_NOP;
         spiTxBursts[2][loop] = ST_DRIVER_NOP;

@@ -1,11 +1,13 @@
 #ifndef AmadeusBase_h
 #define AmadeusBase_h
 
-#include <avr/pgmspace.h>
+#ifdef __AVR__
+    #include <avr/pgmspace.h>
+    #include <TimerOne.h>
+#endif
 #include <limits.h>
 #include <Arduino.h>
 #include <EEPROM.h>
-#include <TimerOne.h>
 
 #include "../amadeus_lcd/PrintFlags.h"
 
@@ -19,7 +21,7 @@ public:
     }
 
     // Public Methods: Predefined Menus
-    void cambiarVarMostrando(char *nombre, long *var, long valmin, long valmax, char *unidad = NULL, bool restart = false);
+    void cambiarVarMostrando(const char *nombre, long *var, long valmin, long valmax, const char *unidad = NULL, bool restart = false);
     bool menuParametros();
     int menu(const char* opciones);
     void resetMenuIndex() { _menuPos = 0; }
@@ -34,6 +36,11 @@ public:
     template <class printTemplate>
     void printf(printTemplate text, uint8_t row, uint8_t printFlag = LCD_CENTER) {
         print( String(text), row, (printFlag&0x3), (printFlag&LCD_CLEAR), 0, !(printFlag&LCD_SKIP_PRINT) );
+    }
+    void printScreen(String row1, String row2, String row3) {
+        print(row1, 0, LCD_CENTER, true, -1, false);
+        print(row2, 1, LCD_CENTER, false, -1, false);
+        print(row3, 2, LCD_CENTER, false, -1, true);
     }
 
 
@@ -67,11 +74,14 @@ protected:
         instance->onInterrupt();
     };
     virtual void onInterrupt();
+    virtual void set_timer(bool);
 
     // Virtual Protected Methods
     virtual void setIncrementalAcceleration(bool);
     virtual bool enterPressed();
     virtual bool backPressed();
+    virtual bool custom1Pressed();
+    virtual bool anyKeyPressed();
 
 
 public:
@@ -79,13 +89,42 @@ public:
     void EEPROM_Clear() {
         for (unsigned int i = 0 ; i < EEPROM.length() ; i++)
             EEPROM.write(i, 0);
+        #ifndef __AVR__
+        set_timer(false); EEPROM.commit(); set_timer(true);
+        #endif
     }
     void EEPROM_WriteValue(long value, int i) {
         EEPROM.put ( sizeof(long)*i, value );
+        #ifndef __AVR__
+        set_timer(false); EEPROM.commit(); set_timer(true);
+        #endif
     }
     void EEPROM_WriteValues() {
         for ( int i=0 ; i<_cantMenus ; i++ )
             EEPROM.put ( sizeof(long)*i, pgm_read_dword(&_valores[i]) );
+        #ifndef __AVR__
+        set_timer(false); EEPROM.commit(); set_timer(true);
+        #endif
+    }
+
+    template <class EEPROM_template>
+    void EEPROM_WriteExtras(EEPROM_template buffer) { 
+        EEPROM_WriteExtras((char *)&buffer, sizeof(buffer));
+    }
+    void EEPROM_WriteExtras(char *buffer, uint8_t size) { 
+        for ( uint8_t i=0 ; i<size ; i++ )
+            EEPROM.put ( (sizeof(long)*_cantMenus)+i, buffer[i] ); 
+        #ifndef __AVR__
+        set_timer(false); EEPROM.commit(); set_timer(true);
+        #endif
+    }
+    template <class EEPROM_template>
+    void EEPROM_GetExtras(EEPROM_template &buffer) {
+        EEPROM_GetExtras((char *)&buffer, sizeof(buffer));
+    }
+    void EEPROM_GetExtras(char *buffer, uint8_t size) {
+        for ( uint8_t i=0 ; i<size ; i++ )
+            EEPROM.get ( (sizeof(long)*_cantMenus)+i, buffer[i] ); 
     }
     static long mPow(long base, long exp) {
         long salida = 1;

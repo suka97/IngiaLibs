@@ -59,6 +59,37 @@ class IngiaST_StepperDriver
             for( uint8_t i=0 ; i<3 ; i++ )
                 spi_read_write(ST_DRIVER_NOP);
         }
+
+    // types to string
+    public: 
+        String th_Status_ToString(th_Status_t th_Status) {
+            String salida;
+            switch(th_Status) {
+                case TH_NORMAL:
+                    salida = String("TH_NORMAL"); break;
+                case TH_WARNING:
+                    salida = String("TH_WARNING"); break;
+                case TH_BRIDGE_SD:
+                    salida = String("TH_BRIDGE_SD"); break;
+                case TH_DEVICE_SD:
+                    salida = String("TH_DEVICE_SD"); break;
+            }
+            return salida;
+        }
+        String motorStatus_ToString(motorStatus_t motorStatus) {
+            String salida;
+            switch(motorStatus) {
+                case STOPPED:
+                    salida = String("STOPPED"); break;
+                case ACCELERATING:
+                    salida = String("ACCELERATING"); break;
+                case DECELERATING:
+                    salida = String("DECELERATING"); break;
+                case CONSTANT_SPEED:
+                    salida = String("CONSTANT_SPEED"); break;
+            }
+            return salida;
+        }
         
     protected:
         uint8_t ssel, reset;

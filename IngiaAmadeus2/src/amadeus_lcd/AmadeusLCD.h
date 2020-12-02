@@ -48,10 +48,7 @@ public:
     
 
     // Print
-    //template <class printTemplate>
     void print(String str, uint8_t row = 0, uint8_t printFlag = LCD_LEFT, boolean clearFlag = false, int startIndex = -1, boolean printNow = true) {
-        //String str = String(text);
-
         if (clearFlag) {
             _clearBuffer();
         }

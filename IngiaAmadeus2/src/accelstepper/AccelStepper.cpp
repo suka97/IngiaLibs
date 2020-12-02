@@ -382,7 +382,7 @@ void AccelStepper::step0(long step)
 void AccelStepper::step1(long step)
 {
     (void)(step); // Unused
-
+/*
     // _pin[0] is step, _pin[1] is direction
     setOutputPins(_direction ? 0b10 : 0b00); // Set direction first else get rogue pulses
     setOutputPins(_direction ? 0b11 : 0b01); // step HIGH
@@ -390,6 +390,11 @@ void AccelStepper::step1(long step)
     // Delay the minimum allowed pulse width
     delayMicroseconds(_minPulseWidth);
     setOutputPins(_direction ? 0b10 : 0b00); // step LOW
+*/
+    digitalWrite(_pin[1], (_direction)?HIGH:LOW);
+    digitalWrite(_pin[0], LOW);
+    delayMicroseconds(_minPulseWidth);
+    digitalWrite(_pin[0], HIGH);
 }
 
 

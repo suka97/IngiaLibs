@@ -2,7 +2,7 @@
 
 AmadeusBase * AmadeusBase::instance = NULL;
 
-void AmadeusBase::cambiarVarMostrando(char *nombre, long *var, long valmin, long valmax, char *unidad, bool restart) {
+void AmadeusBase::cambiarVarMostrando(const char *nombre, long *var, long valmin, long valmax, const char *unidad, bool restart) {
     static int flagMinMax = 0;
     static bool borderValueSituation = false;    // indica si la ultima vez estaba escrito max o min 
     
@@ -38,79 +38,41 @@ void AmadeusBase::cambiarVarMostrando(char *nombre, long *var, long valmin, long
 }
 
 bool AmadeusBase::menuParametros() {
-    static int topIndex = 0;
-    static bool printMenuFlag = true, currentlyChanging = false;
-    static long indexMenu = 0;  // lo hago long para poder usar cambiarVar()
-    static long bufferValor;
-    static uint8_t lastRowIndex = 0;
-
-    char bufferMenu[25], bufferUnid[10];    // 25 por tirar un numero grande de getMaxLetters()
-
-    if ( !currentlyChanging ) {
-        if (printMenuFlag) { 
-            lcdClear();
-            for ( int i=0 ; i<getMaxRows(); i++ ) {
-                if ( (i+topIndex) < _cantMenus ) {
-                    strcpy_P(bufferMenu, (char*)pgm_read_word(&(_menus[i+topIndex]))); // no tocar renglon ;)
-                    print( String(" ") + String(bufferMenu), i, LCD_LEFT, false, 1, false );
+    char buffer[200], buffer_name[20], buffer_unid[10];
+    strcpy(buffer, "");
+    for ( uint8_t i=0 ; i<_cantMenus ; i++ ) {
+        strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[i])));
+        strcat(buffer, buffer_name);
+        if ( i!=(_cantMenus-1) ) strcat(buffer, ",");
+    }
+    
+    int opcion = menu(buffer);
+    if ( opcion = (-1) ) {
+        strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[opcion])));
+        strcpy_P(buffer_unid, (char*)pgm_read_word(&(_unids[opcion])));
+        long bufferVal = getVal(opcion);
+        long buffer_valMin = pgm_read_word_near(_valmin + opcion);
+        long buffer_valMax = pgm_read_word_near(_valmax + opcion);
+        while ( opcion != (-1) ) {
+            cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
+            bool saveVal = false;
+            while ( 1 ) {
+                cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid );
+                if ( enterPressed() ) { saveVal=true; break; }
+                if ( backPressed() ) break;
+                if ( custom1Pressed() ) {
+                    bufferVal = pgm_read_word_near(_valores + opcion);
                 }
             }
-            printMenuFlag = false;  
-            print(">", (indexMenu - topIndex), LCD_LEFT, false, 0);
-
-            setIncrementalAcceleration(false);
-        }
-
-        if ( cambiarVarIncremental(&indexMenu, 0, (_cantMenus-1)) ) {
-            // si me pase de la zona imprimible
-            if ( (indexMenu+1) > (topIndex + getMaxRows()) ) {
-                topIndex++;
-                printMenuFlag = true;
+            if ( saveVal ) {
+                EEPROM_WriteValue(bufferVal, opcion);
+                printScreen("VALOR","GUARDADO","");
+                delay(1000);
             }
-            else if ( (indexMenu < topIndex) ) {
-                topIndex--;
-                printMenuFlag = true;
-            }
-            else {
-                print(" ", (lastRowIndex - topIndex), LCD_LEFT, false, 0, false); 
-                print(">", (indexMenu - topIndex), LCD_LEFT, false, 0);
-            }
-            lastRowIndex = indexMenu;
-        }
-        
-        if ( backPressed() ) {
-            printMenuFlag = true;
-            lcdClear();
-            return false;
-        }
-        else if ( enterPressed() ) {
-            bufferValor = getVal(indexMenu);
-            currentlyChanging = true;
-            setIncrementalAcceleration(true);
-
-            strcpy_P(bufferMenu, (char*)pgm_read_word(&(_menus[indexMenu]))); // no tocar renglon ;)
-            strcpy_P(bufferUnid, (char*)pgm_read_word(&(_unids[indexMenu]))); // no tocar renglon ;)
-            delay(200);
+            opcion = menu(buffer);
         }
     }
-    else {     
-        if ( printMenuFlag ) {
-            cambiarVarMostrando( bufferMenu, &(bufferValor), pgm_read_dword(&_valmin[indexMenu]),
-                pgm_read_dword(&_valmax[indexMenu]), bufferUnid );
-        }
-        else {
-            printMenuFlag = true;
-            cambiarVarMostrando( bufferMenu, &(bufferValor), pgm_read_dword(&_valmin[indexMenu]),
-                pgm_read_dword(&_valmax[indexMenu]), bufferUnid, true );
-        }
-
-        if ( backPressed() || enterPressed() ) {
-            currentlyChanging = false;
-            EEPROM_WriteValue(bufferValor, indexMenu);
-        }
-    }
-
-    return true;
+    return false;
 }
 
 uint8_t AmadeusBase::_getOpcionesSize(char const *str, char index) {
@@ -150,10 +112,10 @@ uint8_t AmadeusBase::_splitOpciones(char const *str, char** buffer, uint8_t word
 }
 
 int AmadeusBase::menu(const char* opciones) {
-    uint8_t cantItems = _getOpcionesSize(opciones, ',');        //Serial.println(String("cantItems: ")+cantItems);
-    uint8_t wordSize = getMaxLetters()-1;                       //Serial.println(String("wordSize: ")+wordSize);
-    char items[cantItems][wordSize];                            //Serial.println(String("_menuPos: ")+_menuPos);
-    _splitOpciones(opciones, (char**)items, wordSize, ',');     //for(uint8_t i=0;i<cantItems;i++) Serial.println(String(i)+": "+items[i]);
+    uint8_t cantItems = _getOpcionesSize(opciones, ',');        
+    uint8_t wordSize = getMaxLetters()-1;                       
+    char items[cantItems][wordSize];                            
+    _splitOpciones(opciones, (char**)items, wordSize, ',');     
     if ( _menuPos > (cantItems-1) )
         _menuPos = 0;
 
@@ -163,14 +125,14 @@ int AmadeusBase::menu(const char* opciones) {
     if ( cantItems > getMaxRows() ) 
         topIndex = (_menuPos > (cantItems-getMaxRows())) ? (cantItems-getMaxRows()) : _menuPos;     
     uint8_t lastRowIndex = _menuPos;
-    bool printMenuFlag = true;                                  //Serial.println(String("topIndex: ")+topIndex);
+    bool printMenuFlag = true;                                  
     while ( !enterPressed() ) 
     {
         if (printMenuFlag) { 
             lcdClear();
             for ( int i=0 ; i<getMaxRows() ; i++ ) {
                 if ( (i+topIndex) < cantItems ) {
-                    print( String(" ") + String(items[i+topIndex]), i, LCD_LEFT, false, 1, false );     //Serial.println(String(i)+": "+items[i+topIndex]);
+                    print( String(" ") + String(items[i+topIndex]), i, LCD_LEFT, false, 1, false );     
                 }
             }
             printMenuFlag = false;  
@@ -196,8 +158,6 @@ int AmadeusBase::menu(const char* opciones) {
 
         // devuelvo -1 si cancelo
         if( backPressed() ) return (-1);
-        //if(enterPressed()) { while(enterPressed()); Serial.println("ENTER"); }
-        //if(backPressed()) { while(backPressed()); Serial.println("BACK"); }
     }
     return (int)_menuPos;
 }
