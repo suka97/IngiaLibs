@@ -41,18 +41,29 @@ bool AmadeusBase::menuParametros() {
     char buffer[200], buffer_name[20], buffer_unid[10];
     strcpy(buffer, "");
     for ( uint8_t i=0 ; i<_cantMenus ; i++ ) {
-        strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[i])));
+        #ifdef __AVR__
+            strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[i])));
+        #else
+            strcpy_P(buffer_name, _menus[i]);
+        #endif
         strcat(buffer, buffer_name);
         if ( i!=(_cantMenus-1) ) strcat(buffer, ",");
     }
     
     int opcion = menu(buffer); 
     if ( opcion != (-1) ) {
-        strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[opcion]))); 
-        strcpy_P(buffer_unid, (char*)pgm_read_word(&(_unids[opcion]))); 
         long bufferVal = getVal(opcion); 
-        long buffer_valMin = pgm_read_word_near(_valmin + opcion); 
-        long buffer_valMax = pgm_read_word_near(_valmax + opcion); 
+        #ifdef __AVR__
+            strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[opcion]))); 
+            strcpy_P(buffer_unid, (char*)pgm_read_word(&(_unids[opcion]))); 
+            long buffer_valMin = pgm_read_word_near(_valmin + opcion); 
+            long buffer_valMax = pgm_read_word_near(_valmax + opcion); 
+        #else
+            strcpy_P(buffer_name, _menus[opcion]); 
+            strcpy_P(buffer_unid, _unids[opcion]); 
+            long buffer_valMin = _valmin[opcion]; 
+            long buffer_valMax = _valmax[opcion]; 
+        #endif
         while ( opcion != (-1) ) {
             cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
             bool saveVal = false;
@@ -61,7 +72,11 @@ bool AmadeusBase::menuParametros() {
                 if ( enterPressed() ) { saveVal=true; break; }
                 if ( backPressed() ) break;
                 if ( custom1Pressed() ) {
-                    bufferVal = pgm_read_word_near(_valores + opcion);
+                    #ifdef __AVR__
+                        bufferVal = pgm_read_word_near(_valores + opcion);
+                    #else
+                        bufferVal = _valores[opcion];
+                    #endif
                     cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
                     while(custom1Pressed());
                 }

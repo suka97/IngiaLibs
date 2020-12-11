@@ -33,13 +33,13 @@ bool IngiaAmadeus2_Base::begin() {
     #ifndef __AVR__
     EEPROM.begin(512); // EEPROM size
     #endif
-    for ( uint8_t i=0 ; i<_cantMenus ; i++ ) {
-        if ( (getVal(i) < (long)pgm_read_dword(&_valmin[i])) || (getVal(i) > (long)pgm_read_dword(&_valmax[i])) )
-            EEPROM.put ( sizeof(long)*i, pgm_read_dword(&_valores[i]) );
-    }
-    #ifndef __AVR__
-    EEPROM.commit();
-    #endif
+    // for ( uint8_t i=0 ; i<_cantMenus ; i++ ) {
+    //     if ( (getVal(i) < (long)pgm_read_dword(&_valmin[i])) || (getVal(i) > (long)pgm_read_dword(&_valmax[i])) )
+    //         EEPROM.put ( sizeof(long)*i, pgm_read_dword(&_valores[i]) );
+    // }
+    // #ifndef __AVR__
+    // EEPROM.commit();
+    // #endif
 
     // init timer isr
     #ifdef __AVR__

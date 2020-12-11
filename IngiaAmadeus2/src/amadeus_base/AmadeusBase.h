@@ -100,10 +100,13 @@ public:
         #endif
     }
     void EEPROM_WriteValues() {
-        for ( int i=0 ; i<_cantMenus ; i++ )
-            EEPROM.put ( sizeof(long)*i, pgm_read_dword(&_valores[i]) );
-        #ifndef __AVR__
-        set_timer(false); EEPROM.commit(); set_timer(true);
+        #ifdef __AVR__
+            for ( int i=0 ; i<_cantMenus ; i++ )
+                EEPROM.put ( sizeof(long)*i, pgm_read_dword(&_valores[i]) );
+        #else
+            for ( int i=0 ; i<_cantMenus ; i++ )
+                EEPROM.put ( sizeof(long)*i, _valores[i] );
+            set_timer(false); EEPROM.commit(); set_timer(true);
         #endif
     }
 
