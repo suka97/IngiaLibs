@@ -107,7 +107,7 @@ uint8_t AmadeusBase::_splitOpciones(char const *str, uint16_t *startIndexes, uin
     }
     endIndexes[wordIndex] = i-1; 
 
-    return (wordIndex);   // devuelve el tamaño final
+    return (wordIndex+1);   // devuelve el tamaño final
 }
 
 
@@ -115,7 +115,14 @@ int AmadeusBase::menu(const char* opciones) {
     uint8_t maxWordLen = getMaxLetters()+1;
     char wordBuffer[maxWordLen] = "";
     uint16_t startIndexes[MAX_MENU_LEN], endIndexes[MAX_MENU_LEN];      
-    uint8_t cantItems = _splitOpciones(opciones, startIndexes, endIndexes, MAX_MENU_LEN, ',');     
+    uint8_t cantItems = _splitOpciones(opciones, startIndexes, endIndexes, MAX_MENU_LEN, ',');  
+
+    // Serial.println("CANT: "+String(cantItems));
+    // for(uint8_t i=0 ; i<cantItems ; i++) {  
+    //     for(uint8_t j=startIndexes[i] ; j<=endIndexes[i] ; j++) Serial.print(opciones[j]); 
+    //     Serial.println("");
+    // }
+
     if ( _menuPos > (cantItems-1) )
         _menuPos = 0;
 

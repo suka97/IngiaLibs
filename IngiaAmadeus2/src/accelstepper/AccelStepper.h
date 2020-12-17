@@ -528,6 +528,12 @@ public:
     /// \return true if the speed is not zero or not at the target position
     bool    isRunning();
 
+    void resetMov() {
+        _stepInterval = 0;
+        _speed = 0.0;
+        _n = 0;
+    }
+
 protected:
 
     /// \brief Direction indicator
