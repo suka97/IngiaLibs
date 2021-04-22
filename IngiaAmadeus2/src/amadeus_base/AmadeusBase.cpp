@@ -37,9 +37,9 @@ void AmadeusBase::cambiarVarMostrando(const char *nombre, long *var, long valmin
     }
 }
 
-bool AmadeusBase::menuParametros() {
+bool AmadeusBase::menuParametros() { 
     char buffer[200], buffer_name[20], buffer_unid[10];
-    strcpy(buffer, "");
+    strcpy(buffer, ""); 
     for ( uint8_t i=0 ; i<_cantMenus ; i++ ) {
         #ifdef __AVR__
             strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[i])));
@@ -51,7 +51,7 @@ bool AmadeusBase::menuParametros() {
     }
     
     int opcion = menu(buffer); 
-    if ( opcion != (-1) ) {
+    while ( opcion != (-1) ) { 
         long bufferVal = getVal(opcion); 
         #ifdef __AVR__
             strcpy_P(buffer_name, (char*)pgm_read_word(&(_menus[opcion]))); 
@@ -64,31 +64,30 @@ bool AmadeusBase::menuParametros() {
             long buffer_valMin = _valmin[opcion]; 
             long buffer_valMax = _valmax[opcion]; 
         #endif
-        while ( opcion != (-1) ) {
-            cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
-            bool saveVal = false;
-            while ( 1 ) {
-                cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid );
-                if ( enterPressed() ) { saveVal=true; break; }
-                if ( backPressed() ) break;
-                if ( custom1Pressed() ) {
-                    #ifdef __AVR__
-                        bufferVal = pgm_read_word_near(_valores + opcion);
-                    #else
-                        bufferVal = _valores[opcion];
-                    #endif
-                    cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
-                    while(custom1Pressed());
-                }
+
+        cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
+        bool saveVal = false;
+        while ( 1 ) {
+            cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid );
+            if ( enterPressed() ) { saveVal=true; break; }
+            if ( backPressed() ) break;
+            if ( custom1Pressed() ) {
+                #ifdef __AVR__
+                    bufferVal = pgm_read_word_near(_valores + opcion);
+                #else
+                    bufferVal = _valores[opcion];
+                #endif
+                cambiarVarMostrando( buffer_name, &(bufferVal), buffer_valMin, buffer_valMax, buffer_unid, true );
+                while(custom1Pressed());
             }
-            if ( saveVal ) {
-                EEPROM_WriteValue(bufferVal, opcion);
-                printScreen("VALOR","GUARDADO","");
-                delay(1000);
-            }
-            opcion = menu(buffer);
         }
-    }
+        if ( saveVal ) {
+            EEPROM_WriteValue(bufferVal, opcion);
+            printScreen("VALOR","GUARDADO","");
+            delay(1000);
+        }
+        opcion = menu(buffer, false);
+    } 
     return false;
 }
 
@@ -111,7 +110,7 @@ uint8_t AmadeusBase::_splitOpciones(char const *str, uint16_t *startIndexes, uin
 }
 
 
-int AmadeusBase::menu(const char* opciones) {
+int AmadeusBase::menu(const char* opciones, bool resetPos) {
     uint8_t maxWordLen = getMaxLetters()+1;
     char wordBuffer[maxWordLen] = "";
     uint16_t startIndexes[MAX_MENU_LEN], endIndexes[MAX_MENU_LEN];      
@@ -123,8 +122,10 @@ int AmadeusBase::menu(const char* opciones) {
     //     Serial.println("");
     // }
 
-    if ( _menuPos > (cantItems-1) )
+    if ( resetPos ) {
+    //if ( _menuPos > (cantItems-1) )
         _menuPos = 0;
+    }
 
     setIncrementalAcceleration(false);
 

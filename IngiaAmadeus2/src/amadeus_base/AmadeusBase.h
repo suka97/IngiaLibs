@@ -24,7 +24,7 @@ public:
     // Public Methods: Predefined Menus
     void cambiarVarMostrando(const char *nombre, long *var, long valmin, long valmax, const char *unidad = NULL, bool restart = false);
     bool menuParametros();
-    int menu(const char* opciones);
+    int menu(const char* opciones, bool resetPos = true);
     void resetMenuIndex() { _menuPos = 0; }
     void menuConfig() { while(menuParametros()); }
 

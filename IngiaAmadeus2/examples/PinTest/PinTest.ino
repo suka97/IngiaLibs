@@ -19,25 +19,29 @@
 #define PIN_LCD_DC                  9
 #define PIN_LCD_RES                 8
 
-// Custom PINS
-#define PIN_PUL PIN_IO_A
-#define PIN_DIR PIN_IO_B
+const uint8_t pins[] = { PIN_IO_A, PIN_IO_B, PIN_IO_C, PIN_IO_D, PIN_IO_E, PIN_IO_F };
 
-// Globals
-AccelStepper stepper(AccelStepper::DRIVER, PIN_PUL, PIN_DIR);
+const int mode = INPUT_PULLUP;
 
 void setup() {
-    pinMode(PIN_IO_C, OUTPUT);
-
-    stepper.setAcceleration(10000);  
-    stepper.setMaxSpeed(2000);
-    stepper.move(1000);
-    while( stepper.run() );
+    Serial.begin(115200);
+    for ( uint8_t i=0 ; i<6 ; i++ ) pinMode(pins[i], mode);
 }
 
 void loop() {
-    digitalWrite(PIN_IO_C, LOW);
-    delay(2000);
-    digitalWrite(PIN_IO_C, HIGH);
-    delay(2000);
+    if ( mode == INPUT_PULLUP ) {
+        for ( uint8_t i=0 ; i<6 ; i++ ) {
+            Serial.print(digitalRead(pins[i])); Serial.print(" ; ");
+        } Serial.println("");
+        delay(500);
+    }
+    else {
+        for ( uint8_t j=0 ; j<6 ; j++ ) {
+            for ( uint8_t i=0 ; i<6 ; i++ ) {
+                digitalWrite(pins[i], (i==j)?HIGH:LOW);
+                Serial.print(digitalRead(pins[i])); Serial.print(" ; ");
+            } Serial.println("");
+            delay(500);
+        }
+    }
 }

@@ -30,6 +30,7 @@ class IngiaStepper
         int32_t getPos() { return _pos; }
         void setMaxSpeed(float vel);
         void setAcceleration(float accel);
+        void setDesAcceleration(float desacc);
         void setMinSpeed(float vel);
 
 
@@ -37,11 +38,11 @@ class IngiaStepper
         uint8_t _pinStep, _pinDir;
         int32_t _pos, _nextPos, _accelStopsPos, _desaccelStartsPos;
         boolean _changingPulse, _running;
-        float _currentVel, _minVel, _maxVel, _accel;
+        float _currentVel, _minVel, _maxVel, _accel, _desacc;
         int8_t _dir, _velInc;
         uint32_t 
             _microsWaitPulse, 
-            _microsWaitAccel,
+            _microsWaitAccel, _microsWaitDesAccel,
             _accelInterval,
             _lastMicrosVel, _lastMicrosAccel;
 

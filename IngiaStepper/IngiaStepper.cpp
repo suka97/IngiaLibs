@@ -7,7 +7,7 @@ void IngiaStepper::begin() {
     //Serial.begin(9600);
 
     // defaults
-    _minVel = 10; _maxVel = 1000; _accel = 500; 
+    _minVel = 10; _maxVel = 1000; _desacc = 500; _accel = 500; 
     _changingPulse = false; _running = false;
     _pos = 0; _nextPos = 0;
 }
@@ -22,6 +22,12 @@ void IngiaStepper::setMaxSpeed(float vel) {
 
 void IngiaStepper::setAcceleration(float accel) {
     _accel = accel;
+    _microsWaitAccel = (uint32_t)(1000000L / _accel);
+}
+
+void IngiaStepper::setDesAcceleration(float desacc) {
+    _desacc = desacc;
+    _microsWaitDesAccel = (uint32_t)(1000000L / _desacc);
 }
 
 void IngiaStepper::move(int32_t relPos) {
@@ -51,26 +57,19 @@ void IngiaStepper::calculateAccelDesaccelPos() {
         _accelStopsPos = _pos + delta * (int32_t)(_dir);
         _desaccelStartsPos = _nextPos - delta * (int32_t)(_dir) + _dir;
     }
-    /*
-    Serial.print("_accelInterval     "); Serial.println(_accelInterval);
-    Serial.print("_pos               "); Serial.println(_pos);
-    Serial.print("_nextPos           "); Serial.println(_nextPos);
-    Serial.print("_accelStopsPos     "); Serial.println(_accelStopsPos);
-    Serial.print("_desaccelStartsPos "); Serial.println(_desaccelStartsPos);
-    Serial.println("");
-    */
 }
 
 boolean IngiaStepper::runToSpeed(float vel, motorDir_t dir) {
+    uint32_t _microsNow = micros();
+
     if ( !_running ) {
         _velInc = 1;
         _currentVel = _minVel; _microsWaitPulse = velToMicros(_minVel);
-        _microsWaitAccel = (uint32_t)(1000000L / _accel);
+        _lastMicrosVel = _microsNow; _lastMicrosAccel = _microsNow;
         digitalWrite(_pinDir, (dir == FWD)?HIGH:LOW);
         _running = true;
     }
 
-    uint32_t _microsNow = micros();
     if ( (_microsNow - _lastMicrosVel) >= (_microsWaitPulse / 2) ) {
         if ( !_changingPulse ) {
             digitalWrite(_pinStep, HIGH);
@@ -84,14 +83,19 @@ boolean IngiaStepper::runToSpeed(float vel, motorDir_t dir) {
         _lastMicrosVel = _microsNow;
     }
 
-    if ( (_velInc != 0) && ((_microsNow - _lastMicrosAccel) >= _microsWaitAccel) ) {
-        if ( _currentVel < vel ) {
+    if ( (_velInc != 0) ) {
+        uint32_t dif = _microsNow - _lastMicrosAccel; 
+        if ( _currentVel == vel ) {
+            _velInc = 0;
+        }
+        else if ( (_currentVel < vel) && (dif >= _microsWaitAccel) ) {
             _currentVel += _velInc;
             _microsWaitPulse = velToMicros(_currentVel);
         }
-        else
-            _velInc = 0;
-
+        else if ( (_currentVel > vel) && (dif >= _microsWaitDesAccel) ) {
+            _currentVel -= _velInc;
+            _microsWaitPulse = velToMicros(_currentVel);
+        }
         _lastMicrosAccel = _microsNow;
     }
 
