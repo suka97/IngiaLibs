@@ -2,7 +2,7 @@
 
 AmadeusBase * AmadeusBase::instance = NULL;
 
-void AmadeusBase::cambiarVarMostrando(const char *nombre, long *var, long valmin, long valmax, const char *unidad, bool restart) {
+void AmadeusBase::cambiarVarMostrando(const char *nombre, long *var, long valmin, long valmax, const char *unidad, bool restart, uint8_t decimales) {
     static int flagMinMax = 0;
     static bool borderValueSituation = false;    // indica si la ultima vez estaba escrito max o min 
     
@@ -16,7 +16,8 @@ void AmadeusBase::cambiarVarMostrando(const char *nombre, long *var, long valmin
 
     bool valueChanged = cambiarVar(var, valmin, valmax, &flagMinMax);
     if ( valueChanged || restart ) {
-        print(String(*var)+" ", 2, LCD_LEFT, false, 0);
+        String num = (decimales==0) ? String(*var) : String((float)(*var)/(float)(decimales*10));
+        print( num+" ", 2, LCD_LEFT, false, 0 );
 
         if ( borderValueSituation ) {
             if ( flagMinMax == 0 ) {
@@ -110,7 +111,7 @@ uint8_t AmadeusBase::_splitOpciones(char const *str, uint16_t *startIndexes, uin
 }
 
 
-int AmadeusBase::menu(const char* opciones, bool resetPos) {
+int AmadeusBase::menu(const char* opciones, bool resetPos, uint8_t* buffer_customPressed) {
     uint8_t maxWordLen = getMaxLetters()+1;
     char wordBuffer[maxWordLen] = "";
     uint16_t startIndexes[MAX_MENU_LEN], endIndexes[MAX_MENU_LEN];      
@@ -168,6 +169,10 @@ int AmadeusBase::menu(const char* opciones, bool resetPos) {
 
         // devuelvo -1 si cancelo
         if( backPressed() ) return (-1);
+        if( custom1Pressed() && (buffer_customPressed!=NULL) ) {
+            *buffer_customPressed = 1;
+            break;
+        }
     }
     return (int)_menuPos;
 }

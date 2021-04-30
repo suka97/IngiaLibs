@@ -19,14 +19,14 @@ bool IngiaAmadeus2_Base::begin() {
     init(MI_FUENTE, 5, 0, 0);      // inicializo lo de AmadeusLCD
     //drawBitmap_Curtain(logo_INGIA, LOGO_INGIA_WIDTH, LOGO_INGIA_HEIGHT, 12, 6);
     drawBitmap(logo_INGIA, LOGO_INGIA_WIDTH, LOGO_INGIA_HEIGHT);
-    delay(1500);
-    setRain(true, 20);
+    delay(1500);/*
+    //setRain(true, 20);
     for( uint8_t i=0 ; i<15 ; i++ ) {
         print(F("ingia.com.ar"), 1, LCD_CENTER, true, -1, false);
         print(F("AMADEUS M2"), 0, LCD_CENTER, false, -1, true);
         delay(200);
-    }
-    setRain(false);
+    }*/
+    //setRain(false);
     lcdClear();
 
     // inicializo EEPROM
@@ -52,7 +52,7 @@ bool IngiaAmadeus2_Base::begin() {
     // para que suelte el boton si lo tiene presionado
     bool mantuvoPresonado = encoderPtr->isPressed();
     if ( mantuvoPresonado ) {
-        print(F("CONFIGURACION"), 1, LCD_CENTER, true);
+        print(F("SUELTE EL BOTON"), 1, LCD_CENTER, true);
         delay(1500);
         while(encoderPtr->isPressed());
     }
@@ -171,6 +171,24 @@ void IngiaAmadeus2_Base::cambiarString(const char *title, char *buffer, uint8_t 
             printFlag = true;
         }
     }
+}
+
+bool IngiaAmadeus2_Base::askYesNo(const char *title) {
+    setIncrementalAcceleration(false);
+    lcdClear();
+    print(title, 0, LCD_CENTER, false, 0, false);
+    print("NO", 1, LCD_LEFT, false, 0, false);
+    print("SI", 1, LCD_RIGHT, false, 0, false);
+    print("^", 2, LCD_LEFT, false, 0, true);
+    long selecBuffer = 0;
+    while ( !enterPressed() ) {
+        if ( cambiarVar(&selecBuffer, 0, 1) ) {
+            clearRow(2);
+            print("^", 2, (selecBuffer==0)?LCD_LEFT:LCD_RIGHT, false, 0, true);
+        }
+        if ( backPressed() ) return false;
+    }
+    return (selecBuffer==0)?false:true;
 }
 
 bool IngiaAmadeus2_Base::login(char const *password) { 

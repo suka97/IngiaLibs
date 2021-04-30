@@ -99,6 +99,7 @@ public:
         return cambiarVar(var, valmin, valmax, flagMaxMin); 
     }
     void cambiarString(const char *title, char *buffer, uint8_t size, char *opc = NULL);
+    bool askYesNo(const char *title);
 
 public:
     void setIncrementalAcceleration(bool en) { encoderPtr->setAccelerationEnabled(en); }

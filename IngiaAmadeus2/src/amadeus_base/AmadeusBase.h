@@ -22,9 +22,9 @@ public:
     }
 
     // Public Methods: Predefined Menus
-    void cambiarVarMostrando(const char *nombre, long *var, long valmin, long valmax, const char *unidad = NULL, bool restart = false);
+    void cambiarVarMostrando(const char *nombre, long *var, long valmin, long valmax, const char *unidad = NULL, bool restart = false, uint8_t decimales = 0);
     bool menuParametros();
-    int menu(const char* opciones, bool resetPos = true);
+    int menu(const char* opciones, bool resetPos = true, uint8_t* buffer_customPressed = NULL);
     void resetMenuIndex() { _menuPos = 0; }
     void menuConfig() { while(menuParametros()); }
 
