@@ -250,6 +250,7 @@
 #ifndef AccelStepper_h
 #define AccelStepper_h
 
+#include <limits.h>
 #include <stdlib.h>
 #if ARDUINO >= 100
 #include <Arduino.h>
@@ -466,6 +467,8 @@ public:
     /// position. Dont use this in event loops, since it blocks.
     void    runToPosition();
 
+    bool runToSpeed(float speed);
+
     /// Runs at the currently selected speed until the target position is reached
     /// Does not implement accelerations.
     /// \return true if it stepped
@@ -499,7 +502,7 @@ public:
     /// approximately 20 microseconds. Times less than 20 microseconds
     /// will usually result in 20 microseconds or so.
     /// \param[in] minWidth The minimum pulse width in microseconds. 
-    void    setMinPulseWidth(unsigned int minWidth);
+    void    setMinPulseWidth(unsigned int minWidth, bool blocking=false);
 
     /// Sets the enable pin number for stepper drivers.
     /// 0xFF indicates unused (default).
@@ -581,6 +584,9 @@ protected:
     /// \param[in] step The current step phase number (0 to 7)
     virtual void   step1(long step);
 
+    unsigned long _lastStepRise;
+    virtual void handleStepFalling();
+
     /// Called to execute a step on a 2 pin motor. Only called when a new step is
     /// required. Subclasses may override to implement new stepping
     /// interfaces. The default sets or clears the outputs of pin1 and pin2
@@ -654,6 +660,7 @@ private:
 
     /// The minimum allowed pulse width in microseconds
     unsigned int   _minPulseWidth;
+    bool _pulseBlocking;
 
     /// Is the direction pin inverted?
     ///bool           _dirInverted; /// Moved to _pinInverted[1]
@@ -684,7 +691,6 @@ private:
 
     /// Min step size in microseconds based on maxSpeed
     float _cmin; // at max speed
-
 };
 
 /// @example Random.pde

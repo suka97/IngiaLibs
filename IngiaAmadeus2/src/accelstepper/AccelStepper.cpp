@@ -44,6 +44,7 @@ boolean AccelStepper::runSpeed()
     if (!_stepInterval)
 	return false;
 
+    handleStepFalling();
     unsigned long time = micros();   
     if (time - _lastStepTime >= _stepInterval)
     {
@@ -93,6 +94,51 @@ void AccelStepper::setCurrentPosition(long position)
     _stepInterval = 0;
     _speed = 0.0;
 }
+
+
+bool AccelStepper::runToSpeed(float speed) {
+    static float last_speed = 0;
+    if ( speed != last_speed ) {
+        _cmin = 1000000.0 / speed;
+        if (_n > 0) {
+            _n = (long)((_speed * _speed) / (2.0 * _acceleration)); // Equation 16
+            if(speed < _speed) _n = -_n;
+        }
+        last_speed = speed;
+    }
+    if (_n == 0) {
+        // First step from stopped
+        _cn = _c0;
+        _direction = (speed > 0) ? DIRECTION_CW : DIRECTION_CCW;
+        _n++;
+        _stepInterval = _cn;
+        _speed = 1000000.0 / _cn;
+        if (_direction == DIRECTION_CCW) _speed = -_speed;
+    }
+    else if ( runSpeed() && _speed!=speed ) {
+        // if ( _n>0 && abs(speed)<abs(_speed) ) {
+        //     long stepsToStop = (long)((_speed * _speed) / (2.0 * _acceleration)); // Equation 16
+        //     _n = -stepsToStop; // Start deceleration
+        // }
+        // Subsequent step. Works for accel (n is +_ve) and decel (n is -ve).
+        // Serial.println(String(_cn)+"  "+String(_cmin));
+        // _cn = max(_cn, _cmin); 
+        if ( _cn > _cmin ) {
+            _cn = _cn - ((2.0 * _cn) / ((4.0 * _n) + 1)); // Equation 13
+            if ( _cn < _cmin ) _cn = _cmin;
+        }
+        else {
+            _cn = _cn - ((2.0 * _cn) / ((4.0 * _n) + 1)); // Equation 13
+            if ( _cn > _cmin ) _cn = _cmin;
+        }
+        _n++;
+        _stepInterval = _cn;
+        _speed = 1000000.0 / _cn;
+        if (_direction == DIRECTION_CCW) _speed = -_speed;
+    }
+    return _speed != speed;
+}
+
 
 void AccelStepper::computeNewSpeed()
 {
@@ -393,8 +439,20 @@ void AccelStepper::step1(long step)
 */
     digitalWrite(_pin[1], (_direction)?HIGH:LOW);
     digitalWrite(_pin[0], LOW);
-    delayMicroseconds(_minPulseWidth);
-    digitalWrite(_pin[0], HIGH);
+    _lastStepRise = micros();
+    if ( _pulseBlocking ) {
+        delayMicroseconds(_minPulseWidth);
+        digitalWrite(_pin[0], HIGH);
+    }
+}
+
+
+void AccelStepper::handleStepFalling() {
+    if ( digitalRead(_pin[0]) == LOW ) {
+        if ( micros()-_lastStepRise >= _minPulseWidth ) {
+            digitalWrite(_pin[0], HIGH);
+        }
+    }
 }
 
 
@@ -581,9 +639,10 @@ void    AccelStepper::enableOutputs()
     }
 }
 
-void AccelStepper::setMinPulseWidth(unsigned int minWidth)
+void AccelStepper::setMinPulseWidth(unsigned int minWidth, bool blocking)
 {
     _minPulseWidth = minWidth;
+    _pulseBlocking = blocking;
 }
 
 void AccelStepper::setEnablePin(uint8_t enablePin)
