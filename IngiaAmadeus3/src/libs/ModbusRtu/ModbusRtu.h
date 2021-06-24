@@ -183,6 +183,9 @@ public:
   Modbus(uint8_t u8id, uint8_t u8serno, uint8_t u8txenpin);
   void begin(long u32speed, int u8config = SERIAL_8N1);
   void begin();
+  void begin(HardwareSerial *serial) {
+    port = serial;
+  }
   void setTimeOut( uint16_t u16timeout); //!<write communication watch-dog timer
   uint16_t getTimeOut(); //!<get communication watch-dog timer value
   boolean getTimeOutState(); //!<get communication watch-dog timer state

@@ -29,7 +29,9 @@ public:
             PIN_ENCODER_BUTTON     =     2,
             PIN_LCD_CS             =     5,
             PIN_LCD_DC             =     27,
-            PIN_LCD_RES            =     25;
+            PIN_LCD_RES            =     25,
+            PIN_TX                 =     1,
+            PIN_RX                 =     3;
 
 // -------------------------------------------- Public Members -------------------------------------------------
 public:
