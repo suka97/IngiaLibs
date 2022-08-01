@@ -98,8 +98,10 @@ void AccelStepper::setCurrentPosition(long position)
 
 bool AccelStepper::runToSpeed(float speed) {
     static float last_speed = 0;
+    if ( speed==0 && _cn>=_c0 ) return true;
+
     if ( speed != last_speed ) {
-        _cmin = 1000000.0 / speed;
+        _cmin = (speed!=0) ? (1000000.0/speed) : LONG_MAX;
         if (_n > 0) {
             _n = (long)((_speed * _speed) / (2.0 * _acceleration)); // Equation 16
             if(speed < _speed) _n = -_n;
@@ -121,22 +123,22 @@ bool AccelStepper::runToSpeed(float speed) {
         //     _n = -stepsToStop; // Start deceleration
         // }
         // Subsequent step. Works for accel (n is +_ve) and decel (n is -ve).
-        // Serial.println(String(_cn)+"  "+String(_cmin));
+        // Serial.println(String(_cn)+"  "+String(_cmin)+"  "+String(_c0));
         // _cn = max(_cn, _cmin); 
         if ( _cn > _cmin ) {
             _cn = _cn - ((2.0 * _cn) / ((4.0 * _n) + 1)); // Equation 13
-            if ( _cn < _cmin ) _cn = _cmin;
+            if ( _cn < _cmin ) _cn = _cmin;     // la aprox se paso para arriba
         }
         else {
             _cn = _cn - ((2.0 * _cn) / ((4.0 * _n) + 1)); // Equation 13
-            if ( _cn > _cmin ) _cn = _cmin;
+            if ( _cn > _cmin ) _cn = _cmin;     // la aprox se paso para abajo
         }
         _n++;
         _stepInterval = _cn;
         _speed = 1000000.0 / _cn;
         if (_direction == DIRECTION_CCW) _speed = -_speed;
     }
-    return _speed != speed;
+    return _speed == speed;
 }
 
 

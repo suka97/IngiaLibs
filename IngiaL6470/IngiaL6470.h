@@ -47,6 +47,9 @@ class IngiaL6470 : public IngiaST_StepperDriver
         int32_t getPosition(void) {
             return convertPosition( getParam(L6470_ABS_POS) );
         }
+        float getCurrentSpeed(void) {
+            return spd_reg_val_to_steps_s( getParam(L6470_SPEED) );
+        }
         void setAcceleration(float acc) {
             setParam(L6470_ACC, acc_dec_steps_s2_to_reg_val(acc));
         }
@@ -146,6 +149,15 @@ class IngiaL6470 : public IngiaST_StepperDriver
         **********************************************************/
         float fs_spd_reg_val_to_steps_s(uint32_t regVal) {
             return (((float)regVal+0.999f)*15.258789f);
+        }
+
+        /**********************************************************
+        * @brief Convert the SPEED register value into step/s
+        * @param[in] regVal The INT_SPEED register value
+        * @retval The speed as steps/s
+        **********************************************************/
+        float spd_reg_val_to_steps_s(uint32_t regVal) {
+            return (((float)(regVal))*0.01490116119f);
         }
 
         /**********************************************************

@@ -660,7 +660,7 @@ private:
 
     /// The minimum allowed pulse width in microseconds
     unsigned int   _minPulseWidth;
-    bool _pulseBlocking;
+    bool _pulseBlocking = false;
 
     /// Is the direction pin inverted?
     ///bool           _dirInverted; /// Moved to _pinInverted[1]

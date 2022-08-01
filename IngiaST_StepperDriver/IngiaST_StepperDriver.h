@@ -52,6 +52,9 @@ class IngiaST_StepperDriver
         void hardStop(void) {
             sendCommand(ST_DRIVER_HARD_STOP, 0);
         }
+        void softStop(void) {
+            sendCommand(ST_DRIVER_SOFT_STOP, 0);
+        }
         void run(direction_t direction, float speed_steps_s) {
             sendCommand((uint8_t)ST_DRIVER_RUN|(uint8_t)direction, speed_steps_s_to_reg_val(speed_steps_s));
         }
